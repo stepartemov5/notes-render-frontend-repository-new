@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Заметки ― Условия использования</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#f7f8fa">
+    <link rel="icon" href="/иконка заметки.svg" type="image/svg+xml">
+    <script>
+        (() => {
+            try {
+                const saved = localStorage.getItem("startNotes.theme") || "system";
+                const theme = saved === "system"
+                    ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                    : saved;
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch {}
+        })();
+    </script>
+    <style>
+        * {-webkit-tap-highlight-color: transparent;}
+        
+        @font-face {
+            font-family: 'PT Root UI';
+            src: url(/pt-root-ui_vf.woff);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Manrope';
+            src: url(/Manrope-VariableFont_wght.ttf);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: light;
+            --bg-color: #f7f8fa;
+            --text-color: #1d2024;
+            --secondary-text: #6b7078;
+            --btn-bg: #ededf0;
+            --btn-hover: #e2e4e8;
+            --accent-subtle: rgba(251, 212, 56, 0.16);
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg-color: #13151a;
+            --text-color: #e3e6eb;
+            --secondary-text: #969ca6;
+            --btn-bg: #22252a;
+            --btn-hover: #2d3138;
+            --accent-subtle: rgba(107, 141, 255, 0.14);
+        }
+
+        :root {
+            --scroll-thumb: #d3d7dd;
+            --scroll-thumb-hover: #b8bec7;
+        }
+
+        :root[data-theme="dark"] {
+            --scroll-thumb: #2f333a;
+            --scroll-thumb-hover: #454a53;
+        }
+
+        @supports not selector(::-webkit-scrollbar) {
+            html {
+                scrollbar-width: thin;
+                scrollbar-color: var(--scroll-thumb) transparent;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            border: 2px solid transparent;
+            border-radius: 6px;
+            background: var(--scroll-thumb) padding-box;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scroll-thumb-hover) padding-box;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        ::selection {
+            background: var(--accent-subtle);
+            color: var(--text-color);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        h1,
+        h2 {
+            font-family: 'PT Root UI', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+        }
+
+        h1 {
+            margin-top: 0;
+            padding-right: 130px;
+        }
+
+        h2 {
+            margin-top: 42px;
+            margin-bottom: 16px;
+        }
+
+        p,
+        li {
+            line-height: 1.7;
+        }
+
+        main {
+            position: relative;
+            max-width: 900px;
+            margin: 48px auto;
+            padding: 0 24px 64px;
+        }
+
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--text-color);
+        }
+
+        a:hover {
+            border-bottom-style: solid;
+        }
+
+        ul {
+            margin-top: 12px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .updated {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 24px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            font-family: 'PT Root UI', system-ui, sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background-color: var(--btn-hover);
+        }
+
+        .lang-btn.active {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .lang-section {
+            display: none;
+        }
+
+        .lang-section.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                margin-top: 32px;
+            }
+
+            h1 {
+                padding-right: 0;
+                padding-top: 52px;
+            }
+
+            .lang-switch {
+                left: 24px;
+                right: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="lang-switch">
+            <button class="lang-btn active" type="button" data-lang="ru">RU</button>
+            <button class="lang-btn" type="button" data-lang="en">EN</button>
+        </div>
+
+        <div id="lang-ru" class="lang-section active">
+            <h1>Условия использования сервиса Заметки</h1>
+
+            <p class="updated">Вступает в силу: 30 октября 2026 года</p>
+
+            <p>Настоящие Условия использования регулируют пользование сервисом Заметки.</p>
+
+            <p>
+                <b>Используя сервис Заметки, вы соглашаетесь с этими Условиями и с <a href="/privacy">Политикой конфиденциальности</a>.</b>
+            </p>
+
+            <h2>1. Сервис</h2>
+
+            <p>Заметки — сервис для создания, хранения и синхронизации заметок между устройствами пользователя. Сервис предоставляется бесплатно.</p>
+
+            <h2>2. Учётная запись</h2>
+
+            <p>Для работы с Сервисом нужна учётная запись Google, GitHub или Discord. Способы входа с одинаковым адресом электронной почты объединяются в одну учётную запись.</p>
+
+            <p>Пользователь отвечает за безопасность своей учётной записи и устройств, на которых выполнен вход в Сервис, а также за всё, что происходит в Сервисе под его учётной записью.</p>
+
+            <h2>3. Содержимое заметок</h2>
+
+            <p>Всё, что пользователь пишет в заметках, принадлежит пользователю. Сервис использует содержимое заметок только для того, чтобы хранить и показывать их пользователю.</p>
+
+            <p>Пользователь сам отвечает за содержимое своих заметок.</p>
+
+            <h2>4. Запрещённое использование</h2>
+
+            <p>Запрещается:</p>
+
+            <ul>
+                <li>использовать Сервис для нарушения закона или прав других людей;</li>
+                <li>хранить и распространять через Сервис вредоносный код;</li>
+                <li>пытаться получить доступ к чужим данным или к инфраструктуре Сервиса;</li>
+                <li>создавать чрезмерную нагрузку на Сервис, в том числе автоматическими запросами.</li>
+            </ul>
+
+            <p>При нарушении этих правил доступ к Сервису может быть ограничен.</p>
+
+            <h2>5. Секретные заметки</h2>
+
+            <p>Секретные заметки шифруются в браузере пользователя. Пароль хранилища нигде не хранится, поэтому Сервис не может его восстановить.</p>
+
+            <p>Если пароль забыт, а passkey недоступен, доступ к секретным заметкам будет потерян. Сервис не несёт ответственности за такую потерю.</p>
+
+            <h2>6. Доступность Сервиса</h2>
+
+            <p>Сервис предоставляется «как есть». Мы стараемся, чтобы Заметки работали стабильно, но не гарантируем бесперебойную работу, отсутствие ошибок и сохранность данных при сбоях сторонних сервисов.</p>
+
+            <p>Рекомендуем хранить копии важных заметок отдельно.</p>
+
+            <p>Функции Сервиса могут меняться. О прекращении работы Сервиса мы предупредим заранее, чтобы пользователи успели сохранить свои заметки.</p>
+
+            <h2>7. Ограничение ответственности</h2>
+
+            <p>В пределах, допустимых законом, Сервис не несёт ответственности за косвенные убытки, упущенную выгоду и потерю данных, возникшие в связи с использованием Сервиса.</p>
+
+            <h2>8. Прекращение использования</h2>
+
+            <p>Пользователь может в любой момент перестать пользоваться Сервисом и удалить свои заметки. Удаление учётной записи в Сервисе не предусмотрено.</p>
+
+            <h2>9. Изменения Условий</h2>
+
+            <p>Условия могут обновляться. Новая версия публикуется на этой странице и вступает в силу с указанной в ней даты. Продолжая пользоваться Сервисом после этой даты, вы соглашаетесь с новой версией.</p>
+
+            <h2>10. Действительность Условий</h2>
+
+            <p>Если какое-либо положение Условий противоречит закону, действующему для пользователя, оно применяется в той мере, в какой это допустимо. Остальные положения продолжают действовать.</p>
+        </div>
+
+        <div id="lang-en" class="lang-section">
+            <h1>Terms of Use for Notes</h1>
+
+            <p class="updated">Effective: Oct 30, 2026</p>
+
+            <p>These Terms of Use govern your use of the Notes service.</p>
+
+            <p>
+                <b>By using the Notes service, you agree to these Terms and to the <a href="/privacy">Privacy Policy</a>.</b>
+            </p>
+
+            <h2>1. The Service</h2>
+
+            <p>Notes is a service for creating, storing, and synchronizing notes across a user's devices. The Service is provided free of charge.</p>
+
+            <h2>2. Your Account</h2>
+
+            <p>A Google, GitHub, or Discord account is required to use the Service. Sign-in methods that share the same email address are combined into a single account.</p>
+
+            <p>Users are responsible for the security of their Account and of the devices on which they are signed in to the Service, and for all activity under their Account.</p>
+
+            <h2>3. Your Content</h2>
+
+            <p>Everything a user writes in notes belongs to the user. The Service uses note content only to store and display it to the user.</p>
+
+            <p>Users are responsible for the content of their notes.</p>
+
+            <h2>4. Prohibited Use</h2>
+
+            <p>You may not:</p>
+
+            <ul>
+                <li>use the Service to break the law or violate the rights of others;</li>
+                <li>store or distribute malicious code through the Service;</li>
+                <li>attempt to access other users' data or the Service infrastructure;</li>
+                <li>place excessive load on the Service, including through automated requests.</li>
+            </ul>
+
+            <p>Access to the Service may be restricted if these rules are violated.</p>
+
+            <h2>5. Secret Notes</h2>
+
+            <p>Secret notes are encrypted in the user's browser. The vault password is not stored anywhere, so the Service cannot recover it.</p>
+
+            <p>If the password is forgotten and no passkey is available, access to secret notes is lost. The Service is not responsible for such loss.</p>
+
+            <h2>6. Availability</h2>
+
+            <p>The Service is provided "as is". We work to keep Notes stable, but we do not guarantee uninterrupted or error-free operation, or the safety of data in case of third-party service failures.</p>
+
+            <p>We recommend keeping separate copies of important notes.</p>
+
+            <p>Features of the Service may change. If the Service is shut down, we will give advance notice so users can save their notes.</p>
+
+            <h2>7. Limitation of Liability</h2>
+
+            <p>To the extent permitted by law, the Service is not liable for indirect damages, lost profits, or loss of data arising from the use of the Service.</p>
+
+            <h2>8. Stopping Use of the Service</h2>
+
+            <p>Users may stop using the Service and delete their notes at any time. Account deletion is not provided by the Service.</p>
+
+            <h2>9. Changes to These Terms</h2>
+
+            <p>These Terms may be updated. A new version is published on this page and takes effect on the date stated in it. By continuing to use the Service after that date, you agree to the new version.</p>
+
+            <h2>10. Validity of These Terms</h2>
+
+            <p>If any provision of these Terms conflicts with the law applicable to the user, it applies to the extent permitted. The remaining provisions stay in effect.</p>
+        </div>
+    </main>
+
+    <script>
+        (() => {
+            const LANG_KEY = 'startNotes.legalLanguage';
+            const THEME_KEY = 'startNotes.theme';
+            const TITLES = { ru: 'Заметки ― Условия использования', en: 'Notes ― Terms of Use' };
+            const buttons = document.querySelectorAll('.lang-btn');
+            const sections = document.querySelectorAll('.lang-section');
+
+            function switchLang(lang) {
+                sections.forEach(s => s.classList.toggle('active', s.id === `lang-${lang}`));
+                buttons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+                document.documentElement.lang = lang;
+                document.title = TITLES[lang];
+                try {
+                    localStorage.setItem(LANG_KEY, lang);
+                } catch {}
+            }
+
+            buttons.forEach(b => b.addEventListener('click', () => switchLang(b.dataset.lang)));
+
+            let saved = null;
+            try {
+                saved = localStorage.getItem(LANG_KEY);
+            } catch {}
+            if (saved !== 'ru' && saved !== 'en') {
+                saved = navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+            }
+            switchLang(saved);
+
+            function applyTheme() {
+                let saved = 'system';
+                try {
+                    saved = localStorage.getItem(THEME_KEY) || 'system';
+                } catch {}
+                const theme = saved === 'system'
+                    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : saved;
+                document.documentElement.setAttribute('data-theme', theme);
+                document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#13151a' : '#f7f8fa';
+            }
+
+            applyTheme();
+            matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+            window.addEventListener('storage', e => {
+                if (e.key === THEME_KEY) applyTheme();
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,383 @@
+@font-face {
+    font-family: 'PT Root UI';
+    src: url(pt-root-ui_vf.woff);
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Manrope';
+    src: url(Manrope-VariableFont_wght.ttf);
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url(JetBrainsMono[wght].ttf);
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    --background: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1d2024;
+    --desc: #6b7280;
+    --border: #e7eaee;
+    --accent: #fbd438;
+    --accent-text: #1d2024;
+    --accent-subtle: rgba(251, 212, 56, 0.16);
+    --shadow-sm: 0 1px 2px rgba(29, 32, 36, 0.05);
+    --shadow-md: 0 1px 2px rgba(29, 32, 36, 0.04), 0 10px 24px rgba(29, 32, 36, 0.08);
+    --shadow-lg: 0 2px 4px rgba(29, 32, 36, 0.06), 0 20px 48px rgba(29, 32, 36, 0.14);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --sidebar-width: 320px;
+    --font-size-base: 16px;
+    --mono: 'JetBrains Mono', 'Cascadia Code', 'Menlo', ui-monospace, monospace;
+}
+
+:root[data-theme="dark"] {
+    --background: #16181b;
+    --panel: #1d2024;
+    --text: #f3f4f6;
+    --desc: #a5acb8;
+    --border: #30343b;
+    --accent: #6b8dff;
+    --accent-text: #ffffff;
+    --accent-subtle: rgba(107, 141, 255, 0.14);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.2), 0 10px 24px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.3), 0 20px 48px rgba(0, 0, 0, 0.45);
+    --icon-filter: brightness(0) invert(1);
+}
+
+::selection {
+    background: var(--accent-subtle);
+    color: var(--text);
+}
+
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: var(--font-size-base);
+}
+
+body {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--background);
+    color: var(--text);
+    font-family: 'PT Root UI', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
+}
+
+button {
+    font-family: 'PT Root UI', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--text);
+}
+
+input {
+    font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+    border: none;
+    background: none;
+    outline: none;
+    color: var(--text);
+}
+
+img {
+    display: block;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+.note-content ul.checklist {
+    list-style: none;
+    padding-left: 0;
+    margin: 12px 0;
+}
+
+.checklist-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 3px 0 3px 30px;
+    margin: 6px 0;
+    color: var(--text);
+    text-decoration: line-through;
+    text-decoration-color: transparent;
+    text-decoration-thickness: 1px;
+    cursor: pointer;
+    transition: color 0.3s var(--ease-out), text-decoration-color 0.3s var(--ease-out);
+}
+
+.checklist-item[data-checked="true"] {
+    color: var(--desc);
+    text-decoration-color: var(--desc);
+}
+
+.checklist-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    background: var(--panel);
+    transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+
+.checklist-item:hover::before {
+    border-color: var(--accent);
+}
+
+.checklist-item[data-checked="true"]::before {
+    background: var(--accent);
+    border-color: var(--accent);
+    animation: check-pop 0.3s var(--ease-out);
+}
+
+.checklist-item::after {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: calc(50% - 1px);
+    width: 4px;
+    height: 8px;
+    border: solid var(--accent-text);
+    border-width: 0 1.8px 1.8px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+    opacity: 0;
+}
+
+.checklist-item[data-checked="true"]::after {
+    opacity: 1;
+    animation: draw-check 0.35s var(--ease-out) forwards;
+}
+
+@keyframes check-pop {
+    0%   { transform: translateY(-50%) scale(1); }
+    40%  { transform: translateY(-50%) scale(0.86); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
+@keyframes draw-check {
+    0%   { clip-path: inset(calc(100% - 2.5px) 100% 0 0); }
+    40%  { clip-path: inset(calc(100% - 2.5px) 0 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+}
+
+.tag-suggestions {
+    position: fixed;
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 180px;
+    padding: 4px;
+    overflow-y: auto;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+}
+
+.tag-suggestions.visible {
+    display: flex;
+}
+
+.tag-suggestion {
+    display: block;
+    width: 100%;
+    padding: 7px 10px;
+    text-align: left;
+    border-radius: calc(var(--radius-sm) - 4px);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+    transition: background-color 0.15s var(--ease);
+}
+
+.tag-suggestion:hover {
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.note-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.note-card-tag {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+.note-card.note-card-selectable {
+    display: block;
+}
+
+.note-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    transition: margin-left 0.2s var(--ease);
+}
+
+.note-card-checkbox {
+    position: absolute;
+    left: 12px;
+    top: 11px;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    background: var(--panel);
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+    transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), background-color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+
+.notes-list.select-mode .note-card-checkbox {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.notes-list.select-mode .note-card-main {
+    margin-left: 28px;
+}
+
+.note-card-checkbox:hover {
+    border-color: var(--accent);
+}
+
+.note-card-checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.note-card-checkbox.checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 4px;
+    height: 7.5px;
+    border: solid var(--accent-text);
+    border-width: 0 1.5px 1.5px 0;
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.selection-bar {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 8px 8px 12px;
+    margin-bottom: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-12px);
+    opacity: 0;
+    transition: transform 0.28s var(--ease-out), opacity 0.22s var(--ease);
+}
+
+.selection-bar.visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.selection-bar.hiding {
+    transform: translateY(-12px);
+    opacity: 0;
+}
+
+.selection-bar-count {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.selection-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.selection-bar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    transition: background-color 0.15s var(--ease);
+}
+
+.selection-bar-btn:hover {
+    background: var(--accent-subtle);
+}
+
+.selection-bar-btn img {
+    width: 15px;
+    height: 15px;
+    filter: var(--icon-filter, none);
+    opacity: 0.85;
+}
+
+.selection-bar-btn.danger:hover {
+    background: rgba(226, 80, 74, 0.12);
+}
+
+.selection-bar-btn.danger:hover img {
+    filter: invert(36%) sepia(74%) saturate(2476%) hue-rotate(335deg) brightness(95%) contrast(92%);
+}
+
+.note-card {
+    touch-action: manipulation;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .checklist-item[data-checked="true"]::before,
+    .checklist-item[data-checked="true"]::after {
+        animation: none;
+    }
+}

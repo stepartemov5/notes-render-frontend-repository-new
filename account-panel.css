@@ -1,0 +1,237 @@
+.account-panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    margin-bottom: -8px;
+    transition: grid-template-rows 0.22s var(--ease), margin-bottom 0.22s var(--ease);
+}
+
+.account-panel.open {
+    grid-template-rows: 1fr;
+    margin-bottom: 0;
+}
+
+.account-panel-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.account-panel-card {
+    padding: 14px 12px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--background);
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.16s var(--ease), transform 0.2s var(--ease);
+}
+
+.account-panel.open .account-panel-card {
+    opacity: 1;
+    transform: none;
+}
+
+.account-panel-title {
+    margin: 0 0 6px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.account-panel-text {
+    margin: 0 0 12px;
+    color: var(--desc);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.account-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.account-panel-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--panel);
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.account-panel-option-icon {
+    display: block;
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    opacity: 0.85;
+    filter: var(--icon-filter, none);
+    transition: filter 0.15s var(--ease), opacity 0.15s var(--ease);
+}
+
+.account-panel-option:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+    color: var(--accent);
+}
+
+.account-panel-option:hover:not(:disabled) .account-panel-option-icon {
+    filter: var(--theme-accent-filter);
+    opacity: 1;
+}
+
+.account-panel-option.danger {
+    color: #e2504a;
+}
+
+.account-panel-option.danger .account-panel-option-icon,
+.account-panel-option.danger:hover:not(:disabled) .account-panel-option-icon {
+    filter: brightness(0) saturate(100%) invert(39%) sepia(34%) saturate(910%) hue-rotate(313deg) brightness(105%) contrast(114%);
+    opacity: 1;
+}
+
+.account-panel-option.danger:hover:not(:disabled) {
+    border-color: rgba(226, 80, 74, 0.45);
+    background: rgba(226, 80, 74, 0.06);
+    color: #e2504a;
+}
+
+.account-panel-option:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.account-panel-providers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.account-panel-providers .provider-btn {
+    height: 44px;
+    min-width: 0;
+    padding: 0 8px;
+    gap: 7px;
+    border-radius: var(--radius-sm);
+}
+
+.account-panel-providers .provider-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.account-panel-providers .provider-label {
+    font-size: 12px;
+}
+
+.account-panel-providers .provider-spinner {
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    margin: -9px 0 0 -9px;
+}
+
+.account-panel-terms {
+    margin: 10px 0 0;
+    color: var(--desc);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 10.5px;
+    line-height: 1.5;
+}
+
+.account-panel-terms a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dotted currentColor;
+}
+
+.account-panel-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.account-panel-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.account-panel-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.account-panel-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.account-panel-info strong,
+.account-panel-info span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-panel-info strong {
+    color: var(--text);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.account-panel-info span {
+    color: var(--desc);
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 11px;
+}
+
+.account-panel-actions {
+    margin-top: 12px;
+}
+
+.account-panel-actions-top {
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.login-btn.open {
+    border-color: var(--accent);
+    background: var(--accent-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .account-panel,
+    .account-panel-card {
+        transition: none;
+    }
+}

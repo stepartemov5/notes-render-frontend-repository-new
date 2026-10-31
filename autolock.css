@@ -1,0 +1,132 @@
+.autolock-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+        grid-template-rows 0.3s var(--ease),
+        opacity 0.22s var(--ease);
+}
+
+.autolock-body.open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.autolock-inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.autolock-caption {
+    margin: 14px 0 10px;
+    font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--desc);
+}
+
+.autolock-summary {
+    display: inline-block;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.wheel-picker {
+    --wheel-item: 36px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    height: calc(var(--wheel-item) * 5);
+    padding: 0 6px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.wheel-picker::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    top: 50%;
+    height: var(--wheel-item);
+    transform: translateY(-50%);
+    border-radius: calc(var(--radius-sm) - 2px);
+    background: var(--panel);
+    box-shadow: var(--shadow-sm);
+    pointer-events: none;
+}
+
+.wheel {
+    position: relative;
+    flex: 1 1 0;
+    max-width: 120px;
+}
+
+.wheel-scroller {
+    position: relative;
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    cursor: grab;
+    outline: none;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, #000 68%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, #000 68%, transparent 100%);
+}
+
+.wheel-scroller::-webkit-scrollbar {
+    display: none;
+}
+
+.wheel-scroller.dragging {
+    cursor: grabbing;
+    scroll-snap-type: none;
+}
+
+.wheel-track {
+    padding: calc(var(--wheel-item) * 2) 0;
+}
+
+.wheel-item {
+    height: var(--wheel-item);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 46px;
+    scroll-snap-align: center;
+    font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 18px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--desc);
+    cursor: pointer;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+    transition: color 0.15s var(--ease);
+}
+
+.wheel-item.is-selected {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.wheel-unit {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    pointer-events: none;
+}
+
+.wheel-scroller:focus-visible + .wheel-unit {
+    color: var(--accent);
+}

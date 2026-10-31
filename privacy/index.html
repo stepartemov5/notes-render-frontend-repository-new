@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Заметки ― Политика конфиденциальности</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#f7f8fa">
+    <link rel="icon" href="/иконка заметки.svg" type="image/svg+xml">
+    <script>
+        (() => {
+            try {
+                const saved = localStorage.getItem("startNotes.theme") || "system";
+                const theme = saved === "system"
+                    ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                    : saved;
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch {}
+        })();
+    </script>
+    <style>
+        * {-webkit-tap-highlight-color: transparent;}
+
+        @font-face {
+            font-family: 'PT Root UI';
+            src: url(/pt-root-ui_vf.woff);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: 'Manrope';
+            src: url(/Manrope-VariableFont_wght.ttf);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: light;
+            --bg-color: #f7f8fa;
+            --text-color: #1d2024;
+            --secondary-text: #6b7078;
+            --btn-bg: #ededf0;
+            --btn-hover: #e2e4e8;
+            --accent-subtle: rgba(251, 212, 56, 0.16);
+        }
+
+        :root[data-theme="dark"] {
+            color-scheme: dark;
+            --bg-color: #13151a;
+            --text-color: #e3e6eb;
+            --secondary-text: #969ca6;
+            --btn-bg: #22252a;
+            --btn-hover: #2d3138;
+            --accent-subtle: rgba(107, 141, 255, 0.14);
+        }
+
+        :root {
+            --scroll-thumb: #d3d7dd;
+            --scroll-thumb-hover: #b8bec7;
+        }
+
+        :root[data-theme="dark"] {
+            --scroll-thumb: #2f333a;
+            --scroll-thumb-hover: #454a53;
+        }
+
+        @supports not selector(::-webkit-scrollbar) {
+            html {
+                scrollbar-width: thin;
+                scrollbar-color: var(--scroll-thumb) transparent;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            border: 2px solid transparent;
+            border-radius: 6px;
+            background: var(--scroll-thumb) padding-box;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--scroll-thumb-hover) padding-box;
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        ::selection {
+            background: var(--accent-subtle);
+            color: var(--text-color);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        h1,
+        h2 {
+            font-family: 'PT Root UI', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+        }
+
+        h1 {
+            margin-top: 0;
+            padding-right: 130px;
+        }
+
+        h2 {
+            margin-top: 42px;
+            margin-bottom: 16px;
+        }
+
+        p,
+        li {
+            line-height: 1.7;
+        }
+
+        main {
+            position: relative;
+            max-width: 900px;
+            margin: 48px auto;
+            padding: 0 24px 64px;
+        }
+
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+            border-bottom: 1px dotted var(--text-color);
+        }
+
+        a:hover {
+            border-bottom-style: solid;
+        }
+
+        ul {
+            margin-top: 12px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .updated {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        .lang-switch {
+            position: absolute;
+            top: 0;
+            right: 24px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            font-family: 'PT Root UI', system-ui, sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background-color: var(--btn-hover);
+        }
+
+        .lang-btn.active {
+            background-color: var(--text-color);
+            color: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .lang-section {
+            display: none;
+        }
+
+        .lang-section.active {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            main {
+                margin-top: 32px;
+            }
+
+            h1 {
+                padding-right: 0;
+                padding-top: 52px;
+            }
+
+            .lang-switch {
+                left: 24px;
+                right: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="lang-switch">
+            <button class="lang-btn active" type="button" data-lang="ru">RU</button>
+            <button class="lang-btn" type="button" data-lang="en">EN</button>
+        </div>
+
+        <div id="lang-ru" class="lang-section active">
+            <h1>Политика конфиденциальности сервиса Заметки</h1>
+
+            <p class="updated">Вступает в силу: 30 октября 2026 года</p>
+
+            <p>
+                Настоящая Политика конфиденциальности описывает,
+                какие данные обрабатывает сервис Заметки,
+                как эти данные используются, хранятся и удаляются.
+            </p>
+
+            <p>
+                <b>Используя сервис Заметки, вы соглашаетесь с Политикой конфиденциальности.</b>
+            </p>
+
+            <h2>1. Общие положения</h2>
+
+            <p>
+                Заметки — сервис для создания, хранения
+                и синхронизации заметок между устройствами пользователя.
+            </p>
+
+            <p>
+                Для авторизации, хранения и синхронизации данных
+                Сервис использует облачную платформу Supabase,
+                предоставляемую Supabase Inc.
+                Серверы этих сервисов могут находиться
+                за пределами страны пользователя.
+            </p>
+
+            <h2>2. Какие данные обрабатываются</h2>
+
+            <p>При использовании Сервиса могут обрабатываться следующие данные:</p>
+
+            <ul>
+                <li>уникальный идентификатор учётной записи пользователя;</li>
+                <li>адрес электронной почты, связанный с учётной записью Google, GitHub или Discord;</li>
+                <li>имя и фотография профиля;</li>
+                <li>технические данные, необходимые для работы авторизации и синхронизации;</li>
+                <li>способ входа, через который создана заметка, и настройка разделения заметок по способу входа;</li>
+                <li>
+                    содержимое созданных пользователем заметок,
+                    включая названия, текст, теги
+                    и состояние закрепления заметки;
+                </li>
+                <li>
+                    секретные заметки в зашифрованном виде
+                    и служебные данные хранилища;
+                </li>
+                <li>даты создания, изменения и удаления заметок.</li>
+            </ul>
+
+            <h2>3. Авторизация</h2>
+
+            <p>
+                Для входа в Сервис используется авторизация
+                с помощью учётной записи Google, GitHub или Discord.
+            </p>
+
+            <p>
+                Проверка учётной записи и процесс авторизации
+                выполняются с использованием Supabase Auth.
+                Заметки не получает и не хранит пароль
+                от учётной записи пользователя.
+            </p>
+
+            <p>
+                Если у разных способов входа совпадает адрес
+                электронной почты, они объединяются в одну учётную запись.
+            </p>
+
+            <h2>4. Секретные заметки</h2>
+
+            <p>
+                Секретные заметки шифруются в браузере пользователя
+                до отправки на сервер. Название, текст и теги
+                секретной заметки хранятся только в зашифрованном виде.
+            </p>
+
+            <p>
+                Пароль хранилища не передаётся на сервер и нигде не хранится.
+                Без пароля ни Сервис, ни Supabase не могут прочитать
+                содержимое секретных заметок.
+            </p>
+
+            <p>
+                Восстановить забытый пароль невозможно.
+                В этом случае доступ к секретным заметкам будет потерян,
+                а хранилище можно только сбросить вместе с его содержимым.
+            </p>
+
+            <p>
+                Хранилище можно открывать через passkey. В этом случае
+                на сервере хранятся идентификатор passkey, название устройства
+                и ключ хранилища, зашифрованный с помощью passkey.
+                Биометрические данные и PIN устройства Сервису не передаются.
+            </p>
+
+            <p>
+                Даты создания и изменения секретных заметок
+                хранятся в открытом виде.
+            </p>
+
+            <h2>5. Использование данных</h2>
+
+            <p>
+                Данные используются исключительно для обеспечения
+                работы функций Сервиса, включая:
+            </p>
+
+            <ul>
+                <li>авторизацию пользователя;</li>
+                <li>сохранение заметок;</li>
+                <li>синхронизацию заметок между устройствами;</li>
+                <li>отображение заметок пользователя после входа в его учётную запись;</li>
+                <li>работу закреплённых и секретных заметок, тегов и корзины.</li>
+            </ul>
+
+            <p>Заметки не использует содержимое заметок для показа рекламы.</p>
+
+            <p>Заметки не продаёт персональные данные или содержимое заметок пользователей.</p>
+
+            <h2>6. Хранение данных</h2>
+
+            <p>
+                Заметки и связанные с ними данные хранятся
+                в облачной базе данных Supabase.
+            </p>
+
+            <p>
+                Чтобы Сервис работал без подключения к интернету,
+                копия заметок и ещё не отправленные изменения
+                хранятся в браузере пользователя, а файлы сайта
+                сохраняются в кэше браузера. Секретные заметки
+                в этой копии хранятся только в зашифрованном виде.
+                При выходе из учётной записи копия заметок удаляется,
+                если все изменения уже отправлены на сервер.
+            </p>
+
+            <p>
+                Данные сохраняются для обеспечения доступа
+                к заметкам после повторного входа в Сервис
+                и на других устройствах пользователя.
+            </p>
+
+            <p>
+                Выход из учётной записи или закрытие Сервиса
+                не приводит к автоматическому удалению
+                сохранённых заметок.
+            </p>
+
+            <p>
+                Настройки интерфейса (тема, размер текста, фильтр поиска,
+                автоблокировка и состояние разделов) хранятся
+                только в браузере пользователя и на сервер не отправляются.
+                Исключение — настройка разделения заметок по способу входа:
+                она сохраняется в учётной записи, чтобы действовать на всех устройствах.
+                Сервис не использует cookies для рекламы или аналитики.
+            </p>
+
+            <h2>7. Удаление заметок</h2>
+
+            <p>При удалении заметки она перемещается в корзину.</p>
+
+            <p>
+                В течение 15 дней пользователь может
+                восстановить заметку или удалить её навсегда.
+            </p>
+
+            <p>
+                По истечении 15 дней заметка удаляется
+                при следующем входе пользователя в Сервис.
+            </p>
+
+            <p>
+                После окончательного удаления заметка
+                больше не доступна через интерфейс Сервиса.
+            </p>
+
+            <h2>8. Учётная запись</h2>
+
+            <p>
+                Удаление учётной записи в Сервисе не предусмотрено.
+            </p>
+
+            <p>
+                Пользователь может в любой момент удалить свои заметки,
+                очистить корзину и сбросить хранилище секретных заметок.
+            </p>
+
+            <h2>9. Сторонние сервисы</h2>
+
+            <p>
+                Для работы Заметок используются сервисы
+                Supabase, Google, GitHub и Discord.
+            </p>
+
+            <p>
+                Эти сервисы могут обрабатывать технические
+                и учётные данные в соответствии
+                с собственными правилами и политиками.
+            </p>
+
+            <p>
+                Библиотеки для работы с Supabase и отображения формул
+                загружаются с jsDelivr. При этом jsDelivr получает
+                технические данные запроса, например IP-адрес.
+                Содержимое заметок на jsDelivr не передаётся.
+            </p>
+
+            <p>
+                Если в заметке включён шрифт Google Sans,
+                он загружается с Google Fonts. При этом Google
+                получает технические данные запроса, например IP-адрес.
+                Содержимое заметок в Google Fonts не передаётся.
+            </p>
+
+            <h2>10. Доступ к заметкам</h2>
+
+            <p>
+                Заметки связаны с уникальным идентификатором
+                учётной записи пользователя.
+            </p>
+
+            <p>
+                Сервис использует идентификатор пользователя
+                для загрузки заметок, связанных
+                с соответствующей учётной записью.
+            </p>
+
+            <p>
+                Пользователь несёт ответственность
+                за безопасность своей учётной записи
+                и доступ к устройствам,
+                на которых выполнен вход в Сервис.
+            </p>
+
+            <h2>11. Изменения Политики</h2>
+
+            <p>
+                Настоящая Политика конфиденциальности
+                может обновляться при изменении функций Сервиса,
+                используемой инфраструктуры
+                или способов обработки данных.
+            </p>
+
+            <p>Актуальная версия Политики публикуется на этой странице.</p>
+        </div>
+
+        <div id="lang-en" class="lang-section">
+            <h1>Privacy Policy for Notes</h1>
+
+            <p class="updated">Effective: Oct 30, 2026</p>
+
+            <p>
+                This Privacy Policy describes what data
+                the Notes service processes and how
+                such data is used, stored, and deleted.
+            </p>
+
+            <p>
+                <b>By using the Notes service, you agree to this Privacy Policy.</b>
+            </p>
+
+            <h2>1. General Information</h2>
+
+            <p>
+                Notes is a service for creating,
+                storing, and synchronizing notes
+                across a user's devices.
+            </p>
+
+            <p>
+                The Service uses the Supabase cloud platform,
+                provided by Supabase Inc., for authentication,
+                data storage, and synchronization.
+                The servers of these services may be located
+                outside the user's country.
+            </p>
+
+            <h2>2. Data We Process</h2>
+
+            <p>The following data may be processed when using the Service:</p>
+
+            <ul>
+                <li>a unique user account identifier;</li>
+                <li>the email address associated with the user's Google, GitHub, or Discord account;</li>
+                <li>the user's profile name and photo;</li>
+                <li>technical data required for authentication and synchronization;</li>
+                <li>the sign-in method used to create a note, and the setting for separating notes by sign-in method;</li>
+                <li>user-created note content, including titles, text, tags, and note pin status;</li>
+                <li>secret notes in encrypted form and vault service data;</li>
+                <li>note creation, modification, and deletion dates.</li>
+            </ul>
+
+            <h2>3. Authentication</h2>
+
+            <p>The Service uses Google, GitHub, and Discord account authentication.</p>
+
+            <p>
+                Account verification and authentication
+                are performed using Supabase Auth.
+                Notes does not receive or store
+                the user's account password.
+            </p>
+
+            <p>
+                If different sign-in methods share the same email address,
+                they are combined into a single account.
+            </p>
+
+            <h2>4. Secret Notes</h2>
+
+            <p>
+                Secret notes are encrypted in the user's browser
+                before being sent to the server. The title, text, and tags
+                of a secret note are stored only in encrypted form.
+            </p>
+
+            <p>
+                The vault password is never sent to the server or stored anywhere.
+                Without the password, neither the Service nor Supabase
+                can read the content of secret notes.
+            </p>
+
+            <p>
+                A forgotten password cannot be recovered.
+                In that case, access to secret notes is lost,
+                and the vault can only be reset together with its content.
+            </p>
+
+            <p>
+                The vault can be unlocked with a passkey. In that case,
+                the server stores the passkey identifier, the device name,
+                and the vault key encrypted with the passkey.
+                Biometric data and the device PIN are never sent to the Service.
+            </p>
+
+            <p>Creation and modification dates of secret notes are stored unencrypted.</p>
+
+            <h2>5. How Data Is Used</h2>
+
+            <p>Data is used solely to provide the functionality of the Service, including:</p>
+
+            <ul>
+                <li>user authentication;</li>
+                <li>saving notes;</li>
+                <li>synchronizing notes across devices;</li>
+                <li>displaying a user's notes after signing in to their account;</li>
+                <li>providing pinned and secret notes, tags, and trash functionality.</li>
+            </ul>
+
+            <p>Notes does not use note content to display advertising.</p>
+
+            <p>Notes does not sell users' personal data or note content.</p>
+
+            <h2>6. Data Storage</h2>
+
+            <p>
+                Notes and related data are stored
+                in the Supabase cloud database.
+            </p>
+
+            <p>
+                To let the Service work without an internet connection,
+                a copy of the notes and changes not yet sent are stored
+                in the user's browser, and the website files are kept
+                in the browser cache. Secret notes are stored in this copy
+                only in encrypted form. When the user signs out,
+                the copy is deleted if all changes have been sent to the server.
+            </p>
+
+            <p>
+                Data is retained to allow users
+                to access their notes after signing in again
+                or when using another device.
+            </p>
+
+            <p>Signing out or closing the Service does not automatically delete saved notes.</p>
+
+            <p>
+                Interface settings (theme, text size, search filter,
+                auto-lock, and section state) are stored only
+                in the user's browser and are not sent to the server.
+                The exception is the setting for separating notes by sign-in method:
+                it is saved to the account so that it applies on all devices.
+                The Service does not use cookies for advertising or analytics.
+            </p>
+
+            <h2>7. Deleting Notes</h2>
+
+            <p>When a note is deleted, it is moved to the trash.</p>
+
+            <p>
+                For 15 days, the user may restore
+                the note or permanently delete it.
+            </p>
+
+            <p>
+                After 15 days, the note is deleted
+                the next time the user signs in to the Service.
+            </p>
+
+            <p>
+                After permanent deletion,
+                the note is no longer available
+                through the Service interface.
+            </p>
+
+            <h2>8. Your Account</h2>
+
+            <p>Account deletion is not provided by the Service.</p>
+
+            <p>
+                Users may delete their notes, empty the trash,
+                and reset the secret notes vault at any time.
+            </p>
+
+            <h2>9. Third-Party Services</h2>
+
+            <p>Notes uses Supabase, Google, GitHub, and Discord services.</p>
+
+            <p>
+                These services may process technical
+                and account information in accordance
+                with their own policies and practices.
+            </p>
+
+            <p>
+                The libraries for working with Supabase and rendering formulas
+                are loaded from jsDelivr. jsDelivr receives technical request data,
+                such as the IP address. Note content is not sent to jsDelivr.
+            </p>
+
+            <p>
+                If the Google Sans font is turned on in a note, it is loaded
+                from Google Fonts. Google receives technical request data,
+                such as the IP address. Note content is not sent to Google Fonts.
+            </p>
+
+            <h2>10. Access to Notes</h2>
+
+            <p>Notes are associated with the unique identifier of the user's account.</p>
+
+            <p>
+                The Service uses this identifier
+                to retrieve notes associated
+                with the corresponding user account.
+            </p>
+
+            <p>
+                Users are responsible for maintaining
+                the security of their Account
+                and devices on which they are signed
+                in to the Service.
+            </p>
+
+            <h2>11. Changes to This Policy</h2>
+
+            <p>
+                This Privacy Policy may be updated
+                when the functionality of the Service,
+                its infrastructure,
+                or data processing practices change.
+            </p>
+
+            <p>The current version of this Privacy Policy is published on this page.</p>
+        </div>
+    </main>
+
+    <script>
+        (() => {
+            const LANG_KEY = 'startNotes.privacyLanguage';
+            const THEME_KEY = 'startNotes.theme';
+            const TITLES = { ru: 'Заметки ― Политика конфиденциальности', en: 'Notes ― Privacy Policy' };
+            const buttons = document.querySelectorAll('.lang-btn');
+            const sections = document.querySelectorAll('.lang-section');
+
+            function switchLang(lang) {
+                sections.forEach(s => s.classList.toggle('active', s.id === `lang-${lang}`));
+                buttons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+                document.documentElement.lang = lang;
+                document.title = TITLES[lang];
+                try {
+                    localStorage.setItem(LANG_KEY, lang);
+                } catch {}
+            }
+
+            buttons.forEach(b => b.addEventListener('click', () => switchLang(b.dataset.lang)));
+
+            let saved = null;
+            try {
+                saved = localStorage.getItem(LANG_KEY);
+            } catch {}
+            if (saved !== 'ru' && saved !== 'en') {
+                saved = navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+            }
+            switchLang(saved);
+
+            function applyTheme() {
+                let saved = 'system';
+                try {
+                    saved = localStorage.getItem(THEME_KEY) || 'system';
+                } catch {}
+                const theme = saved === 'system'
+                    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : saved;
+                document.documentElement.setAttribute('data-theme', theme);
+                document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#13151a' : '#f7f8fa';
+            }
+
+            applyTheme();
+            matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+            window.addEventListener('storage', e => {
+                if (e.key === THEME_KEY) applyTheme();
+            });
+        })();
+    </script>
+</body>
+</html>

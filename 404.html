@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Страница не найдена — Заметки</title>
+    <link rel="icon" href="логотип заметки.svg" type="image/svg+xml">
+    <script defer src="http://127.0.0.1:5500/tracker/a.js"
+    data-site="d1b5ca24-128d-4778-b5cf-6532bc7e6aee"
+    data-api="https://zlxugwlfmzlrvsqovnyd.supabase.co/functions/v1/collect"></script>
+    <script>
+        (() => {
+            try {
+                const savedTheme = localStorage.getItem("startNotes.theme") || "system";
+                const theme =
+                    savedTheme === "system"
+                        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                        : savedTheme;
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch {}
+        })();
+    </script>
+    <style>
+      @font-face {
+        font-family: 'PT Root UI';
+        src: url(pt-root-ui_vf.woff);
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      @font-face {
+        font-family: 'Manrope';
+        src: url(Manrope-VariableFont_wght.ttf);
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+
+      :root {
+            --background: #f7f8fa;
+            --text: #1d2024;
+            --desc: #6b7280;
+            --accent: #fbd438;
+            --accent-text: #1d2024;
+            --accent-subtle: rgba(251, 212, 56, 0.16);
+            --radius-sm: 10px;
+            --ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        :root[data-theme="dark"] {
+          --background: #16181b;
+          --text: #f3f4f6;
+          --desc: #a5acb8;
+          --accent: #6b8dff;
+          --accent-text: #ffffff;
+          --accent-subtle: rgba(107, 141, 255, 0.14);
+          --icon-filter: brightness(0) invert(1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--background);
+            color: var(--text);
+            font-family: 'PT Root UI', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            padding: 24px;
+            transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
+        }
+
+        ::selection {
+          background: var(--accent-subtle);
+          color: var(--text);
+        }
+
+        .error {
+            width: 100%;
+            max-width: 340px;
+            text-align: center;
+        }
+
+        .error-icon {
+            width: 36px;
+            height: 36px;
+            margin: 0 auto 24px;
+            opacity: 0.7;
+            filter: var(--icon-filter, none);
+            transition: filter 0.25s var(--ease);
+        }
+
+        .error-code {
+            font-size: 14px;
+            font-weight: 700;
+            /* letter-spacing: 0.08em; */
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .error-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 14px;
+        }
+
+        .error-text {
+            font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+            font-size: 13.5px;
+            line-height: 1.6;
+            color: var(--desc);
+            margin-bottom: 32px;
+        }
+
+        .error-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            padding: 0 24px;
+            height: 42px;
+            background: transparent;
+            color: var(--accent-text);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            overflow: hidden;
+        }
+
+        .error-btn::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: var(--accent);
+            border-radius: inherit;
+            transition: transform 0.15s var(--ease);
+        }
+
+        .error-btn:hover::before {
+            filter: brightness(1.05);
+        }
+
+        .error-btn:active::before {
+            transform: scale(0.96);
+        }
+
+        .error-btn span {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <img src="логотип заметки.svg" alt="" class="error-icon">
+        <div class="error-code">404</div>
+        <h1 class="error-title">Страница потерялась</h1>
+        <p class="error-text">Мы обыскали все заметки, даже закреплённые — такой страницы тут нет. Возможно, её удалили, а потом ещё и из корзины забыли достать.</p>
+        <a href="/" class="error-btn"><span>Вернуться на главную</span></a>
+    </div>
+</body>
+</html>
