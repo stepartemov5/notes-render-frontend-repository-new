@@ -41,6 +41,23 @@ export function t(text, vars) {
     return result;
 }
 
+export function tFragment(text, nodes) {
+    const fragment = document.createDocumentFragment();
+
+    translated(text).split(/(\{\w+\})/).forEach(part => {
+        const name = part.slice(1, -1);
+
+        if (/^\{\w+\}$/.test(part) && nodes[name]) {
+            fragment.append(nodes[name]);
+        }
+        else if (part) {
+            fragment.append(part);
+        }
+    });
+
+    return fragment;
+}
+
 const statics = { title: null, texts: [], attributes: [] };
 
 function applyStatic() {
@@ -390,7 +407,6 @@ const EN = {
     "Напишите какой-нибудь секрет": "Spill a secret",
     "Сервер получает": "What the server sees",
     "Ключ шифрования защищён вашим паролем и не покидает браузер. Каждое сохранение шифруется заново, поэтому даже одинаковый текст каждый раз выглядит по-разному.": "The encryption key is protected by your password and never leaves the browser. Every save is encrypted from scratch, so even the same text looks different every time.",
-    "Войдите": "Sign in",
-    ", чтобы попробовать: доступно расширенное форматирование текста, реальные секретные заметки и много чего другого": " to unlock rich formatting, real secret notes and a whole lot more.",
-    "Хотите продолжить писать заметку?": "Want to keep writing?"
+    "Хотите продолжить писать заметку? {login}, чтобы увидеть все функции заметок.": "Want to keep writing? {login} to unlock all Notes features.",
+    "Войдите": "Sign in"
 };

@@ -1,6 +1,6 @@
 import { db } from "./backend.js";
 import { auth, login, logout, onUserChanged } from "./auth.js";
-import { t, lang, locale, translateDom, setLanguage, LANGUAGE_EVENT } from "./i18n.js";
+import { t, tFragment, lang, locale, translateDom, setLanguage, LANGUAGE_EVENT } from "./i18n.js";
 import { collection, getDocs, setDoc, doc, deleteDoc } from "./database.js";
 import {
     createVault,
@@ -5285,12 +5285,23 @@ import {
         const input = root.querySelector('.cipher-input');
         root.querySelector('.cipher-limit').hidden = input.value.length < SECURITY_LIMIT;
     }
+    function renderSecurityLimit() {
+        const root = document.getElementById('welcomeSecurity');
+        if (!root)
+            return;
+        const box = root.querySelector('.cipher-limit');
+        const link = root.querySelector('.cipher-limit-link');
+        link.textContent = t('Войдите');
+        box.replaceChildren(tFragment('Хотите продолжить писать заметку? {login}, чтобы увидеть все функции заметок.', { login: link }));
+    }
     function setupWelcomeSecurity() {
         const root = document.getElementById('welcomeSecurity');
         if (!root)
             return;
         const input = root.querySelector('.cipher-input');
         input.maxLength = SECURITY_LIMIT;
+        renderSecurityLimit();
+        document.addEventListener(LANGUAGE_EVENT, renderSecurityLimit);
         input.addEventListener('input', () => {
             updateSecurityLimit();
             scheduleSecurityCipher();
