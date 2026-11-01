@@ -2478,10 +2478,18 @@ textarea,
 }
 
 .search-filter-dropdown.visible {
-    max-height: 52px;
+    max-height: 72px;
     margin-top: -4px;
     opacity: 1;
     pointer-events: auto;
+}
+
+.search-filter-caption {
+    display: block;
+    padding: 0 2px;
+    color: var(--desc);
+    font-size: 11px;
+    line-height: 14px;
 }
 
 .search-filter-seg {
