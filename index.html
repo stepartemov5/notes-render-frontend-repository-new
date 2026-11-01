@@ -2,493 +2,213 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
-    <title>codeq notes</title>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff">
-    <link rel="icon" href="иконка заметки.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="theme.css">
-    <link rel="stylesheet" href="base.css">
-    <link rel="stylesheet" href="secret.css">
-    <link rel="stylesheet" href="welcome.css">
-    <link rel="stylesheet" href="account-panel.css">
-    <link rel="stylesheet" href="autolock.css">
-    <style>
-        ::-webkit-scrollbar {
-            display: none;
-        }
-    </style>
+    <title>codeq drop</title>
     <script>
         (() => {
-    try {
-        const savedTheme = localStorage.getItem("startNotes.theme") || "system";
-
-        const theme =
-            savedTheme === "system"
-                ? (window.matchMedia("(prefers-color-scheme: dark)").matches
-                    ? "dark"
-                    : "light")
-                : savedTheme;
-
-        document.documentElement.setAttribute("data-theme", theme);
-    } catch {}
-    document.documentElement.classList.add("auth-pending");
-    setTimeout(() => document.documentElement.classList.remove("auth-pending"), 15000);
-})();
+            try {
+                const pref = localStorage.getItem('codeqDrop.theme') || 'system';
+                const dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+            } catch (e) { }
+            document.documentElement.classList.add('auth-pending');
+            setTimeout(() => document.documentElement.classList.remove('auth-pending'), 15000);
+        })();
     </script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.css" integrity="sha384-JctiRyLzXCrSoOOzFlSoWLdyzQl7OrrRnhyeBmzB6ZWtcjccUyc8lCQJqIbs3uQX" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.18.7/dist/katex.min.js" integrity="sha384-+7Keh381hSkXmXqnjC0JBM/kzsN6TFj+wMKychSLjTvJ8/0ElMde2uKl8i6p6Buj" crossorigin="anonymous"></script>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/welcome.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <div class="welcome-screen" id="welcomeScreen">
-        <div class="welcome-layout">
-            <div class="theme-menu" id="welcomeTheme">
-                <button type="button" class="welcome-lang-btn" id="welcomeLang">
-                    <svg class="welcome-lang-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm7.931 9h-2.764a14.67 14.67 0 0 0-1.792-6.243A8.013 8.013 0 0 1 19.931 11zM12.53 4.027c1.035 1.364 2.427 3.78 2.627 6.973H9.03c.139-2.596.994-5.028 2.451-6.974.172-.01.344-.026.519-.026.179 0 .354.016.53.027zm-3.842.7C7.704 6.618 7.136 8.762 7.03 11H4.069a8.013 8.013 0 0 1 4.619-6.273zM4.069 13h2.974c.136 2.379.665 4.478 1.556 6.23A8.01 8.01 0 0 1 4.069 13zm7.381 6.973C10.049 18.275 9.222 15.896 9.041 13h6.113c-.208 2.773-1.117 5.196-2.603 6.972-.182.012-.364.028-.551.028-.186 0-.367-.016-.55-.027zm4.011-.772c.955-1.794 1.538-3.901 1.691-6.201h2.778a8.005 8.005 0 0 1-4.469 6.201z"/></svg>
-                    <span class="welcome-lang-label"><span class="welcome-lang-label-text"></span></span>
-                </button>
-                <button type="button" class="theme-menu-btn">
-                    <img src="device.svg" class="theme-menu-icon">
-                    <span class="theme-menu-label"><span class="theme-menu-label-text">Системная тема</span></span>
-                </button>
-                <div class="theme-menu-list">
-                    <button type="button" class="theme-menu-option" data-theme-choice="light">
-                        <img src="sun.svg">
-                        <span>Светлая</span>
-                        <span class="theme-menu-check"></span>
-                    </button>
-                    <button type="button" class="theme-menu-option" data-theme-choice="dark">
-                        <img src="moon.svg">
-                        <span>Тёмная</span>
-                        <span class="theme-menu-check"></span>
-                    </button>
-                    <button type="button" class="theme-menu-option" data-theme-choice="system">
-                        <img src="device.svg">
-                        <span>Системная</span>
-                        <span class="theme-menu-check"></span>
-                    </button>
-                </div>
+    <div id="auth" hidden>
+        <div class="controls fixed" data-controls></div>
+
+        <header class="w-header">
+            <div class="brand"><span class="brand-mark"><i class="bx bx-transfer-alt"></i></span><span class="brand-name">codeq drop</span></div>
+        </header>
+
+        <section class="w-sec w-intro">
+            <h1 class="w-title"><span data-i="w_h1a"></span><span class="acc" data-i="w_h1b"></span></h1>
+            <p class="w-lead" data-i="lead"></p>
+        </section>
+
+        <section class="w-sec pv" aria-hidden="true">
+            <div class="pv-side">
+                <span class="on"><i class="bx bx-layer"></i><span data-i="fl_all"></span></span>
+                <span><i class="bx bx-text"></i><span data-i="fl_text"></span></span>
+                <span><i class="bx bx-link"></i><span data-i="fl_link"></span></span>
+                <span><i class="bx bx-file"></i><span data-i="fl_file"></span></span>
             </div>
+            <div class="pv-list">
+                <div class="pv-row" style="--n:0"><i class="bx bx-image"></i><div><b>IMG_2041.jpg</b><small>Android · 2.4 MB · <span data-i="now"></span></small></div><i class="live"></i></div>
+                <div class="pv-row" style="--n:1"><i class="bx bx-link"></i><div><b>figma.com/design/k3Xq…</b><small>iPhone · <span data-i="m_min"></span></small></div></div>
+                <div class="pv-row" style="--n:2"><i class="bx bx-text"></i><div><b>wi-fi: sunny-fox-4417</b><small>Mac · <span data-i="m_hour"></span> · <span data-i="once"></span></small></div></div>
+            </div>
+        </section>
 
-            <header class="welcome-header">
-                <div class="welcome-brand">
-                    <img src="логотип заметки.svg" class="welcome-brand-icon">
-                    <span>codeq notes</span>
+        <ul class="w-sec w-feat">
+            <li class="rv" style="--i:0"><i class="bx bx-bolt-circle"></i><strong data-i="f1"></strong><span data-i="f1d"></span></li>
+            <li class="rv" style="--i:1"><i class="bx bx-timer"></i><strong data-i="f2"></strong><span data-i="f2d"></span></li>
+            <li class="rv" style="--i:2"><i class="bx bx-copy-alt"></i><strong data-i="f3"></strong><span data-i="f3d"></span></li>
+            <li class="rv" style="--i:3"><i class="bx bx-image"></i><strong data-i="f4"></strong><span data-i="f4d"></span></li>
+            <li class="rv" style="--i:4"><i class="bx bx-share-alt"></i><strong data-i="f5"></strong><span data-i="f5d"></span></li>
+            <li class="rv" style="--i:5"><i class="bx bx-lock-alt"></i><strong data-i="f6"></strong><span data-i="f6d"></span></li>
+        </ul>
+
+        <section class="w-sec demo rv">
+            <span class="kicker" data-i="dm_k"></span>
+            <h2 data-i="dm_t"></h2>
+            <p data-i="dm_d"></p>
+            <div class="demo-card">
+                <div class="dev">
+                    <div class="dev-bar"><i class="bx bx-mobile"></i><span data-i="dm_a"></span></div>
+                    <textarea id="demoIn" rows="3" maxlength="160" data-ip="dm_ph"></textarea>
+                    <div class="chips">
+                        <button class="chip" data-chip="link"><i class="bx bx-link"></i><span data-i="dm_c1"></span></button>
+                        <button class="chip" data-chip="pass"><i class="bx bx-key"></i><span data-i="dm_c2"></span></button>
+                        <button class="chip" data-chip="photo"><i class="bx bx-image"></i><span data-i="dm_c3"></span></button>
+                    </div>
+                    <div class="opts">
+                        <span data-i="keep"></span>
+                        <div id="demoTtl" class="seg">
+                            <button class="on" data-ttl="">∞</button>
+                            <button data-ttl="3600" data-i="t1h"></button>
+                            <button data-ttl="burn" data-i="tonce"></button>
+                        </div>
+                    </div>
+                    <button id="demoSend" class="main-btn"><span data-i="send"></span><i class="bx bx-up-arrow-alt"></i></button>
                 </div>
-                <button type="button" class="welcome-header-login" id="welcomeHeaderLogin">Войти</button>
-            </header>
-
-            <section class="welcome-intro">
-                <h1 class="welcome-title">
-                    <span class="welcome-line" style="--d: 120ms">Место для мыслей.</span>
-                    <span class="welcome-line welcome-line-accent" style="--d: 300ms">И не только.</span>
-                </h1>
-                <p class="welcome-lead">Редактор для документов, работы, личных заметок и просто гениальных мыслей в 3 часа ночи.</p>
-            </section>
-
-            <div class="welcome-preview" id="welcomePreview">
-                <div class="preview-sidebar">
-                    <div class="preview-note active">
-                        <span class="preview-note-title">План на неделю</span>
-                        <span class="preview-note-meta">сегодня</span>
+                <div class="demo-arrow" id="demoArrow"><i class="bx bx-right-arrow-alt"></i></div>
+                <div class="dev">
+                    <div class="dev-bar">
+                        <i class="bx bx-laptop"></i><span data-i="dm_b"></span>
+                        <label class="auto"><span data-i="auto"></span><button id="demoAuto" class="switch" role="switch" aria-checked="true"><span></span></button></label>
                     </div>
-                    <div class="preview-note">
-                        <span class="preview-note-title">Встреча с клиентом</span>
-                        <span class="preview-note-meta">вчера</span>
-                    </div>
-                    <div class="preview-note">
-                        <span class="preview-note-title">Релиз 2.4</span>
-                        <span class="preview-note-meta">23 окт.</span>
-                    </div>
-                </div>
-                <div class="preview-editor">
-                    <div class="preview-title" data-type="План на неделю"></div>
-                    <ul class="preview-checklist">
-                        <li style="--c: 0"><span class="preview-check"></span><span>отправить отчёт до 9:00</span></li>
-                        <li style="--c: 1"><span class="preview-check"></span><span>ответить на письма</span></li>
-                        <li><span class="preview-check"></span><span>подготовить слайды к четвергу</span></li>
+                    <ul id="demoFeed">
+                        <li class="dm-row"><i class="bx bx-image"></i><div><b>IMG_2041.jpg</b><small>Android · 2.4 MB · <span data-i="m_hour"></span></small></div></li>
+                        <li class="dm-row"><i class="bx bx-link"></i><div><b>https://www.figma.com/design/k3Xq</b><small>iPhone · <span data-i="m_min"></span></small></div><button class="icon-btn" data-dm="copy"><i class="bx bx-copy"></i></button></li>
                     </ul>
-                    <div class="preview-secret">
-                        <span class="preview-lock"></span>
-                        <span class="preview-secret-text" data-secret="пароль от стенда: q7Lp-2fX9"></span>
-                        <span class="preview-secret-badge">секретная</span>
-                    </div>
+                    <p id="demoToast" class="dm-toast"></p>
                 </div>
             </div>
+        </section>
 
-            <ul class="welcome-features">
-                <li class="welcome-feature" style="--d: 1250ms">
-                    <span class="welcome-feature-icon i-lock"></span>
-                    <strong>Секретные заметки</strong>
-                    <span>Отдельное хранилище, автоблокировка и шифрование до отправки на сервер. Открывается по Face ID или отпечатку.</span>
-                </li>
-                <li class="welcome-feature" style="--d: 1330ms">
-                    <span class="welcome-feature-icon i-offline"></span>
-                    <strong>Работает без интернета</strong>
-                    <span>Пишите в самолёте или в метро. Когда сеть вернётся, всё само уйдёт на сервер.</span>
-                </li>
-                <li class="welcome-feature" style="--d: 1410ms">
-                    <span class="welcome-feature-icon i-formula"></span>
-                    <strong>Формулы прямо в тексте</strong>
-                    <span>Нужно запомнить формулу? Введите её текстом и она появится в заметке в привычном математическом виде.</span>
-                </li>
-                <li class="welcome-feature" style="--d: 1490ms">
-                    <span class="welcome-feature-icon i-editor"></span>
-                    <strong>Редактор не только для текста</strong>
-                    <span>Заголовки, списки, чек-листы, таблицы, ссылки, код и четыре вида подчёркивания. Есть где развернуться.</span>
-                </li>
-            </ul>
+        <footer class="w-sec w-foot">
+            <a href="/terms" data-i="foot_terms"></a>
+            <a href="/privacy" data-i="foot_priv"></a>
+            <span>© codeq drop</span>
+        </footer>
 
-            <section class="welcome-demo" id="welcomeDemo">
-                <div class="welcome-demo-head">
-                    <span class="welcome-demo-kicker">демо</span>
-                    <h2 class="welcome-demo-title">Напишите первую заметку прямо здесь</h2>
-                    <p class="welcome-demo-text">Без входа. Черновик сохранится в этом браузере, а после входа станет вашей первой заметкой.</p>
+        <aside class="auth-side">
+            <div class="auth">
+                <span class="kicker" data-i="a_k"></span>
+                <h2 data-i="a_t"></h2>
+                <p data-i="a_d"></p>
+                <div class="prov-list">
+                    <button class="prov" data-provider="google" aria-label="Google"><i class="bx bxl-google"></i></button>
+                    <button class="prov" data-provider="github" aria-label="GitHub"><i class="bx bxl-github"></i></button>
+                    <button class="prov" data-provider="discord" aria-label="Discord"><i class="bx bxl-discord-alt"></i></button>
                 </div>
-                <div class="welcome-demo-card">
-                    <div class="toolbar-group welcome-demo-toolbar">
-                        <button type="button" data-demo="bold"><img src="bold.svg"></button>
-                        <button type="button" data-demo="italic"><img src="italic.svg"></button>
-                        <button type="button" data-demo="strikeThrough"><img src="strikethrough.svg"></button>
-                        <button type="button" data-demo="insertUnorderedList"><img src="list-ul.svg"></button>
-                        <button type="button" data-demo="checklist"><img src="checklist.svg"></button>
-                    </div>
-                    <input type="text" class="welcome-demo-name" placeholder="Название" maxlength="120" autocomplete="off">
-                    <div class="note-content welcome-demo-body" contenteditable="true" data-placeholder="Список покупок, идея на миллион или план на выходные…"></div>
-                    <div class="welcome-demo-foot">
-                        <span class="welcome-demo-status">Черновик сохранён в браузере</span>
-                        <span class="welcome-demo-status welcome-demo-limit" hidden>Хотите продолжить писать заметку? Войдите, чтобы увидеть все функции заметок.</span>
-                        <button type="button" class="welcome-demo-clear">Стереть</button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="welcome-security" id="welcomeSecurity">
-                <span class="welcome-section-kicker">безопасность</span>
-                <h2 class="welcome-section-title">Как защищены секретные заметки</h2>
-                <p class="welcome-section-text">Шифрование происходит прямо в браузере. Напишите что-нибудь и посмотрите, что на самом деле уходит на сервер.</p>
-                <div class="cipher-demo">
-                    <div class="cipher-pane">
-                        <span class="cipher-label">Текст заметки</span>
-                        <textarea class="cipher-input" rows="4" maxlength="80" spellcheck="false" placeholder="Напишите какой-нибудь секрет"></textarea>
-                    </div>
-                    <span class="cipher-arrow"><span class="security-lock"></span></span>
-                    <div class="cipher-pane cipher-pane-out">
-                        <span class="cipher-label">Сервер получает</span>
-                        <div class="cipher-output" data-placeholder="Здесь появится шифр"></div>
-                    </div>
-                </div>
-                <p class="cipher-limit" hidden>Войдите, чтобы продолжить писать.</p>
-                <p class="cipher-note">Настоящий AES-256 прямо на этой странице. Ключ шифрования защищён вашим паролем и не покидает браузер. Каждое сохранение шифруется заново, поэтому даже одинаковый текст каждый раз выглядит по-разному.</p>
-            </section>
-
-            <aside class="welcome-auth-side">
-                <div class="welcome-auth">
-                    <span class="welcome-auth-kicker">простая авторизация</span>
-                    <h2 class="welcome-auth-title">Два клика до заметок</h2>
-                    <p class="welcome-auth-text">Выберите провайдера: аккаунт будет создан сам, если вы тут впервые.</p>
-                    <div class="welcome-providers" id="welcomeActionArea"></div>
-                    <p class="welcome-terms">
-                        Продолжая, вы соглашаетесь с <a href="/terms" target="_blank" rel="noopener noreferrer">условиями использования</a>
-                        и <a href="/privacy" target="_blank" rel="noopener noreferrer">политикой конфиденциальности</a>.
-                    </p>
-                </div>
-            </aside>
-
-            <footer class="welcome-footer">
-                <a href="/privacy" target="_blank" rel="noopener noreferrer">Политика конфиденциальности</a>
-                <a href="/terms" target="_blank" rel="noopener noreferrer">Условия использования</a>
-            </footer>
-        </div>
+                <p id="hint"></p>
+                <p class="terms"><span data-i="agree"></span> <a href="/terms" data-i="terms_l"></a> <span data-i="and"></span> <a href="/privacy" data-i="privacy_l"></a>.</p>
+            </div>
+        </aside>
     </div>
 
-    <aside class="sidebar">
-        <div class="sidebar-shell">
+    <div id="app" hidden>
+        <aside class="sidebar">
             <div class="sidebar-top">
-                <div class="sidebar-header">
-                    <div class="brand">
-                        <img src="логотип заметки.svg" class="brand-icon">
-                        <div class="brand-text">
-                            <h1>codeq notes</h1>
-                        </div>
-                    </div>
-                    <button class="settings-btn" id="settingsBtn">
-                        <img src="settings.svg">
-                    </button>
-                </div>
-                 <div class="settings-panel" id="settingsPanel">
-                    <div class="settings-header">
-                        <h3>Настройки</h3>
-                        <button id="closeSettingsBtn">
-                            <img src="close.svg">
-                        </button>
-                    </div>
-                    <div class="settings-group">
-                        <div class="settings-title">Тема оформления</div>
-                        <div class="theme-selector">
-                            <button class="theme-option active" data-theme="light"><img src="sun.svg"></button>
-                            <button class="theme-option" data-theme="dark"><img src="moon.svg"></button>
-                            <button class="theme-option" data-theme="system"><img src="device.svg"></button>
-                        </div>
-                    </div>
-                    <div class="settings-group">
-                        <div class="settings-title">Язык</div>
-                        <div class="theme-selector lang-selector">
-                            <button class="theme-option lang-option" data-lang="ru">Русский</button>
-                            <button class="theme-option lang-option" data-lang="en">English</button>
-                        </div>
-                    </div>
-                    <div class="settings-group">
-                        <div class="settings-title">Размер текста</div>
-                        <input type="range" id="fontSize" min="14" max="24" value="16">
-                        <p id="fontPreview" class="font-preview">
-                            Кот прошёлся по клавиатуре и написал роман. Сохранить, правда, забыл.
-                        </p>
-                    </div>
-                    <div class="settings-group">
-                        <div class="settings-title">Статус сохранения</div>
-                        <div class="save-status-setting">
-                            <div class="save-status-setting-info">
-                                <strong>Показывать статус сохранения</strong>
-                            </div>
-                            <button type="button" class="settings-toggle active" id="saveStatusToggle" aria-pressed="true">
-                                <span></span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="settings-group">
-                        <div class="settings-title">Секретные заметки</div>
-                        <div class="save-status-setting">
-                            <div class="save-status-setting-info">
-                                <strong>Автоблокировка хранилища</strong>
-                            </div>
-                            <button type="button" class="settings-toggle active" id="autoLockToggle" aria-pressed="true">
-                                <span></span>
-                            </button>
-                        </div>
-                        <div class="autolock-body open" id="autoLockBody">
-                            <div class="autolock-inner">
-                                <div class="autolock-row">
-                                    <p class="autolock-caption">Закрывать после бездействия</p>
-                                    <div class="theme-menu autolock-menu" id="autoLockPicker"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="settings-group">
-                        <div class="settings-title">Шрифт Google</div>
-                        <div class="save-status-setting">
-                            <div class="save-status-setting-info">
-                                <strong>Кнопка Google Sans в панели</strong>
-                            </div>
-                            <button type="button" class="settings-toggle active" id="googleSansToggle" aria-pressed="true">
-                                <span></span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="settings-group" id="spaceSetting" hidden>
-                        <div class="settings-title">Способы входа</div>
-                        <div class="save-status-setting">
-                            <div class="save-status-setting-info">
-                                <strong>Разделять заметки по способу входа</strong>
-                                <span id="spaceCurrent"></span>
-                            </div>
-                            <button type="button" class="settings-toggle" id="spaceToggle" aria-pressed="false">
-                                <span></span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="settings-group settings-links">
-                        <a href="/privacy" target="_blank" rel="noopener noreferrer" class="settings-link">Политика конфиденциальности</a>
-                        <a href="/terms" target="_blank" rel="noopener noreferrer" class="settings-link">Условия использования</a>
-                        <p class="settings-version">codeq notes <span data-app-version></span> · сборка от <span data-app-build></span></p>
-                    </div>
-                </div>
-                <button class="new-note" id="newNoteBtn">
-                    <img src="plus.svg">
-                    <span>Новая заметка</span>
-                </button>
-
-                <div class="search-wrap">
-                    <img src="search.svg" class="search-icon">
-                    <input type="text" id="searchInput" placeholder="Найти заметку">
-                    <button class="search-filter-btn" id="searchFilterBtn" aria-haspopup="true" aria-expanded="false">
-                        <img src="filter.svg">
-                    </button>
-                </div>
+                <div class="brand"><span class="brand-mark"><i class="bx bx-transfer-alt"></i></span><span class="brand-name">codeq drop</span></div>
+                <button id="newBtn" class="main-btn"><i class="bx bx-plus"></i><span data-i="new_t"></span></button>
+                <label class="search-wrap"><i class="bx bx-search"></i><input id="q" type="text" autocomplete="off" data-ip="q_ph"></label>
             </div>
-
-            <div class="notes-list">
-                <div class="notes-section">
-                    <h2 id="pinnedHeader" class="collapsible-header">
-                        <img src="arrowdown.svg" class="collapse-arrow">
-                        <span>Закреплённые</span>
-                        <span class="list-count" id="pinnedCount"></span>
-                    </h2>
-                    <div class="section-body" id="pinnedBody">
-                        <div id="pinnedNotes" class="notes-container">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notes-section secret-section" id="secretSection" hidden>
-                    <h2 class="collapsible-header" id="secretHeader">
-                        <img src="arrowdown.svg" class="collapse-arrow">
-                        <span>Секретные</span>
-                        <button type="button" class="secret-lock-btn" id="secretLockBtn" hidden>заблокировать</button>
-                        <span class="list-count" id="secretCount"></span>
-                    </h2>
-                    <div class="section-body" id="secretBody">
-                        <div id="secretList" class="notes-container"></div>
-                    </div>
-                </div>
-
-                <div class="notes-section">
-                    <h2 class="collapsible-header" id="allNotesHeader">
-                        <img src="arrowdown.svg" class="collapse-arrow">
-                        <span>Все заметки</span>
-                        <span class="list-count" id="allNotesCount"></span>
-                    </h2>
-                    <div class="section-body" id="allNotesBody">
-                        <div id="notesList" class="notes-container">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="notes-section trash-section" id="trashSection">
-                    <h2 class="collapsible-header collapsed" id="trashHeader">
-                        <img src="arrowdown.svg" class="collapse-arrow">
-                        <span>Корзина</span>
-                        <span class="trash-count" id="trashCount"></span>
-                    </h2>
-                    <div id="trashList" class="notes-container collapsed">
-                    </div>
-                </div>
+            <div class="side-scroll">
+                <h2 class="section-title" data-i="fl_t"></h2>
+                <nav id="filters" class="nav">
+                    <button class="on" data-f="all"><i class="bx bx-layer"></i><span data-i="fl_all"></span><em id="c_all">0</em></button>
+                    <button data-f="text"><i class="bx bx-text"></i><span data-i="fl_text"></span><em id="c_text">0</em></button>
+                    <button data-f="link"><i class="bx bx-link"></i><span data-i="fl_link"></span><em id="c_link">0</em></button>
+                    <button data-f="file"><i class="bx bx-file"></i><span data-i="fl_file"></span><em id="c_file">0</em></button>
+                    <button data-f="pinned"><i class="bx bx-pin"></i><span data-i="fl_pin"></span><em id="c_pinned">0</em></button>
+                </nav>
+                <h2 class="section-title" data-i="dv_t"></h2>
+                <ul id="devices" class="devs"></ul>
             </div>
             <div class="sidebar-footer">
-                <button type="button" class="login-btn" id="loginBtn" aria-expanded="false">
-                    <img src="enter.svg">
-                    <div>
-                        <strong>Войти</strong>
-                    </div>
-                </button>
+                <span class="avatar"><i class="bx bx-user"></i></span>
+                <span id="who"></span>
+                <button id="out" class="icon-btn"><i class="bx bx-log-out"></i></button>
             </div>
+        </aside>
 
-        </div>
-    </aside>
+        <main class="main" id="main">
+            <header class="topbar" id="topbar">
+                <h1 data-i="list_t"></h1>
+                <div class="controls" data-controls></div>
+            </header>
+            <div class="content">
+                <div class="col">
+                    <section class="card composer">
+                        <h2 data-i="new_t"></h2>
+                        <textarea id="text" rows="3" data-ip="ph"></textarea>
+                        <div class="opts">
+                            <span data-i="keep"></span>
+                            <div id="ttl" class="seg">
+                                <button class="on" data-ttl="">∞</button>
+                                <button data-ttl="3600" data-i="t1h"></button>
+                                <button data-ttl="86400" data-i="t1d"></button>
+                                <button data-ttl="burn" data-i="tonce"></button>
+                            </div>
+                        </div>
+                        <div class="opts">
+                            <span data-i="auto"></span>
+                            <button id="auto" class="switch" role="switch" aria-checked="false"><span></span></button>
+                        </div>
+                        <div class="row">
+                            <button id="pick" class="ghost-btn"><i class="bx bx-paperclip"></i><span data-i="file"></span></button>
+                            <input id="file" type="file" multiple hidden>
+                            <button id="send" class="main-btn"><span data-i="send"></span><i class="bx bx-up-arrow-alt"></i></button>
+                        </div>
+                    </section>
+                    <ul id="list"></ul>
+                    <p id="empty" class="empty"></p>
+                </div>
+                <aside class="info">
+                    <section class="card">
+                        <h3 data-i="st_t"></h3>
+                        <div class="stat"><b id="stN">0</b><span data-i="st_n"></span></div>
+                        <div class="stat"><b id="stS">0 KB</b><span data-i="st_s"></span></div>
+                    </section>
+                    <section class="card">
+                        <h3 data-i="kb_t"></h3>
+                        <ul class="keys">
+                            <li><kbd>/</kbd><span data-i="k_search"></span></li>
+                            <li><kbd>Ctrl</kbd><kbd>Enter</kbd><span data-i="k_send"></span></li>
+                            <li><kbd>Ctrl</kbd><kbd>V</kbd><span data-i="k_paste"></span></li>
+                            <li><kbd>Esc</kbd><span data-i="k_esc"></span></li>
+                        </ul>
+                    </section>
+                    <section class="card">
+                        <h3 data-i="tip_t"></h3>
+                        <p class="tip" data-i="tip_d"></p>
+                    </section>
+                </aside>
+            </div>
+        </main>
+    </div>
 
-    <main class="editor">
-        <div class="editor-header">
-            <input type="text" id="noteTitle" class="note-title" placeholder="Название">
-            <span class="secret-badge" id="secretBadge" hidden>секретная</span>
-            <div class="editor-actions">
-                <button id="fullscreenBtn" class="toolbar-btn">
-                    <img src="maximize.svg">
-                </button>
-                <button id="findHeaderBtn" class="toolbar-btn" type="button">
-                    <img src="search.svg">
-                </button>
-                <button id="secretNoteBtn" class="toolbar-btn" hidden>
-                    <img src="lock.svg">
-                </button>
-                <button id="pinNoteBtn" class="toolbar-btn">
-                    <img src="pin.svg">
-                </button>
-                <button id="deleteNoteBtn" class="toolbar-btn">
-                    <img src="trash-bin.svg">
-                </button>
-            </div>
-        </div>
-        <div class="toolbar">
-            <div class="toolbar-group">
-                <button data-action="bold"><img src="bold.svg"></button>
-                <button data-action="italic"><img src="italic.svg"></button>
-                <button id="strikeBtn"><img src="strikethrough.svg"></button>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <button id="underlineSolidBtn" data-underline-style="solid"><img src="underline.svg"></button>
-                <button id="underlineDashedBtn" data-underline-style="dashed"><img src="underline-dashed.svg"></button>
-                <button id="underlineDottedBtn" data-underline-style="dotted"><img src="underline-dotted.svg"></button>
-                <button id="underlineWavyBtn" data-underline-style="wavy"><img src="underline-wavy.svg"></button>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <button id="codeBtn"><img src="code.svg"></button>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <button id="h1Btn"><img src="h1.svg"></button>
-                <button id="h2Btn"><img src="h2.svg"></button>
-                <button id="h3Btn"><img src="h3.svg"></button>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <button id="quote"><img src="quote.svg"></button>
-                <div class="link-toolbar-section" id="linkToolbarSection">
-                    <button id="link"><img src="link.svg"></button>
-                </div>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <button id="listUL"><img src="list-ul.svg"></button>
-                <button id="listOL"><img src="list-ol.svg"></button>
-            </div>
-            <div class="toolbar-divider"></div>
-            <div class="toolbar-group">
-                <button id="checklistBtn"><img src="checklist.svg"></button>
-                <button id="tableBtn" type="button"><img src="table.svg"></button>
-                <button id="formulaBtn" type="button"><img src="formula.svg"></button>
-                <button id="googleSansBtn" class="google-sans-part" type="button"><img src="google.svg"></button>
-            </div>
-        </div>
+    <p id="msg" class="toast"></p>
+    <div id="drop" class="dropzone"><div><i class="bx bx-cloud-upload"></i><h2 data-i="drop_t"></h2></div></div>
 
-        <div class="find-bar" id="findBar" hidden>
-            <div class="find-row">
-                <div class="find-field">
-                    <input type="text" id="findInput" placeholder="Найти" autocomplete="off" spellcheck="false">
-                    <span class="find-count" id="findCount"></span>
-                </div>
-                <button type="button" class="find-icon-btn find-case-btn" id="findCaseBtn">Aa</button>
-                <button type="button" class="find-icon-btn find-prev-btn" id="findPrevBtn"><img src="arrowdown.svg"></button>
-                <button type="button" class="find-icon-btn" id="findNextBtn"><img src="arrowdown.svg"></button>
-                <button type="button" class="find-icon-btn" id="findCloseBtn"><img src="close.svg"></button>
-            </div>
-            <div class="find-row find-replace-row">
-                <div class="find-field">
-                    <input type="text" id="replaceInput" placeholder="Заменить на" autocomplete="off" spellcheck="false">
-                </div>
-                <button type="button" class="notification-cancel" id="replaceBtn">Заменить</button>
-                <button type="button" class="notification-cancel" id="replaceAllBtn">Заменить всё</button>
-            </div>
-        </div>
-
-        <div id="noteContent" class="note-content" contenteditable="true" spellcheck="false" data-placeholder="Текст заметки"></div>
-
-        <div class="editor-footer">
-            <div class="tags">
-                <span class="tags-title">Теги</span>
-                <div id="noteTags" class="tags-list">
-                    <button type="button" id="addTagBtn" class="add-tag">
-                        <span class="add-tag-icon"></span>
-                        Добавить тег
-                    </button>
-                </div>
-            </div>
-            <div class="note-save-status" id="noteSaveStatus" data-status="saved">
-                <span class="note-save-dot"></span>
-                <span class="note-save-text">Сохранено</span>
-                <div class="note-save-error-card">
-                    <div class="note-save-error-content">
-                        <strong>Заметка не сохранена</strong>
-                        <span>Сервер не принял изменения</span>
-                    </div>
-                    <button type="button" class="note-save-retry" id="noteSaveRetry">Сохранить</button>
-                </div>
-            </div>
-        </div>
-    </main>
-    <script type="module" src="app.js"></script>
+    <script type="module" src="/app.js"></script>
+    <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
 </body>
 </html>
