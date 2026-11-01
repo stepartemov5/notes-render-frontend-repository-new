@@ -17,8 +17,8 @@ import {
 (() => {
     'use strict';
     translateDom(document.body);
-    const APP_VERSION = '5.11.0';
-    const APP_BUILD = new Date(2026, 10, 1);
+    const APP_VERSION = '5.10.23';
+    const APP_BUILD = new Date(2026, 9, 23);
     function appBuildDate() {
         return APP_BUILD.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(' г.', '');
     }
@@ -204,7 +204,13 @@ import {
         };
         renderAutoLockPresets();
         let detach = null;
+        let closingTimer = null;
         const close = () => {
+            if (picker.classList.contains('open')) {
+                picker.classList.add('closing');
+                window.clearTimeout(closingTimer);
+                closingTimer = window.setTimeout(() => picker.classList.remove('closing'), 320);
+            }
             picker.classList.remove('open');
             if (detach) {
                 detach();
@@ -3478,10 +3484,10 @@ import {
     }
     let activeFilterDropdown = null;
     const SEARCH_FILTER_LABELS = {
-        all: 'везде',
-        title: 'по названию',
-        content: 'по тексту',
-        tags: 'по тегам',
+        all: 'Везде',
+        title: 'Название',
+        content: 'Текст',
+        tags: 'Теги',
     };
     function closeFilterDropdown() {
         if (!activeFilterDropdown)
@@ -3511,14 +3517,16 @@ import {
             el.searchFilterBtn.focus();
             return;
         }
+        if (!activeFilterDropdown.contains(document.activeElement))
+            return;
         const options = Array.from(activeFilterDropdown.querySelectorAll('.search-filter-option'));
         if (!options.length)
             return;
         const currentIndex = options.indexOf(document.activeElement);
         let nextIndex = currentIndex;
-        if (event.key === 'ArrowDown')
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
             nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % options.length;
-        else if (event.key === 'ArrowUp')
+        else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
             nextIndex = currentIndex < 0 ? options.length - 1 : (currentIndex - 1 + options.length) % options.length;
         else if (event.key === 'Home')
             nextIndex = 0;
@@ -3538,22 +3546,26 @@ import {
         if (!sidebarTop)
             return;
 
+        const filterKeys = Object.keys(SEARCH_FILTER_LABELS);
         const dropdown = document.createElement('div');
         dropdown.className = 'search-filter-dropdown';
         dropdown.id = 'searchFilterDropdown';
-        dropdown.setAttribute('role', 'menu');
-        dropdown.innerHTML = Object.entries(SEARCH_FILTER_LABELS).map(([key, label]) => `
-            <button
-                type="button"
-                role="menuitemradio"
-                aria-checked="${key === searchFilter}"
-                class="search-filter-option${key === searchFilter ? ' active' : ''}"
-                data-filter="${key}"
-                tabindex="${key === searchFilter ? '0' : '-1'}">
-                <span>${t(label)}</span>
-                <span class="search-filter-check" aria-hidden="true"></span>
-            </button>
-        `).join('');
+        dropdown.setAttribute('role', 'radiogroup');
+        dropdown.setAttribute('aria-label', t('Где искать'));
+        dropdown.innerHTML = `
+            <div class="search-filter-seg" style="--i:${Math.max(0, filterKeys.indexOf(searchFilter))}">
+                <span class="search-filter-thumb" aria-hidden="true"></span>
+                ${filterKeys.map(key => `
+                    <button
+                        type="button"
+                        role="radio"
+                        aria-checked="${key === searchFilter}"
+                        class="search-filter-option${key === searchFilter ? ' active' : ''}"
+                        data-filter="${key}"
+                        tabindex="${key === searchFilter ? '0' : '-1'}">${t(SEARCH_FILTER_LABELS[key])}</button>
+                `).join('')}
+            </div>
+        `;
         sidebarTop.appendChild(dropdown);
         activeFilterDropdown = dropdown;
         el.searchFilterBtn.setAttribute('aria-expanded', 'true');
@@ -3568,7 +3580,9 @@ import {
             }
         });
 
-        dropdown.querySelectorAll('.search-filter-option').forEach(button => {
+        const seg = dropdown.querySelector('.search-filter-seg');
+        const optionButtons = Array.from(dropdown.querySelectorAll('.search-filter-option'));
+        optionButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const nextFilter = button.dataset.filter;
                 if (!VALID_SEARCH_FILTERS.has(nextFilter))
@@ -3578,9 +3592,19 @@ import {
                     localStorage.setItem(SEARCH_FILTER_KEY, searchFilter);
                 }
                 catch (e) { }
+                seg.style.setProperty('--i', String(filterKeys.indexOf(nextFilter)));
+                optionButtons.forEach(option => {
+                    const on = option === button;
+                    option.classList.toggle('active', on);
+                    option.setAttribute('aria-checked', String(on));
+                    option.tabIndex = on ? 0 : -1;
+                });
                 el.searchFilterBtn.classList.toggle('active', searchFilter !== 'all');
-                closeFilterDropdown();
                 renderNotesList();
+                window.setTimeout(() => {
+                    if (activeFilterDropdown === dropdown)
+                        closeFilterDropdown();
+                }, 260);
             });
         });
         document.addEventListener('pointerdown', handleFilterDropdownOutsideClick, true);
