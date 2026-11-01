@@ -1,6 +1,6 @@
 import { db } from "./backend.js";
 import { auth, login, logout, onUserChanged } from "./auth.js";
-import { t, tFragment, lang, locale, translateDom, setLanguage, LANGUAGE_EVENT } from "./i18n.js";
+import { t, lang, locale, translateDom, setLanguage, LANGUAGE_EVENT } from "./i18n.js";
 import { collection, getDocs, setDoc, doc, deleteDoc } from "./database.js";
 import {
     createVault,
@@ -966,14 +966,14 @@ import {
                         catch (e) { }
                         passkeySupport = false;
                         card.querySelector('[data-act="passkey"]')?.remove();
-                        setError(t('Этот браузер не умеет открывать хранилище ключом доступа. Откройте его паролем.'));
+                        setError(t('Этот браузер не умеет открывать хранилище с ключом доступа. Откройте его с паролем.'));
                     }
                     else if (name === 'NotAllowedError' || name === 'AbortError')
-                        setError(t('Подходящий ключ доступа не найден или вход отменён. Если ключ сохранён в другом браузере, откройте хранилище паролем.'));
+                        setError(t('Подходящий ключ доступа не найден или вход отменён. Если ключ сохранён в другом браузере, откройте хранилище с паролем.'));
                     else if (message === 'vault: unknown passkey')
-                        setError(t('Этот ключ доступа не добавлен к хранилищу. Откройте хранилище паролем и добавьте его.'));
+                        setError(t('Этот ключ доступа не добавлен к хранилищу. Откройте хранилище с паролем и добавьте его.'));
                     else
-                        setError(t('Не удалось открыть хранилище ключом доступа. Попробуйте пароль.'));
+                        setError(t('Не удалось открыть хранилище с ключом доступа. Попробуйте пароль.'));
                     return;
                 }
                 await finishUnlock(key);
@@ -1012,7 +1012,7 @@ import {
                     else if (name === 'SecurityError')
                         setError(t('Ключи доступа работают только на домене сервиса по https или на localhost, а не по IP-адресу.'));
                     else if (error && error.message === 'vault: prf unsupported')
-                        setError(t('Этот браузер или менеджер паролей не умеет шифровать ключом доступа. Хранилище по-прежнему открывается паролем.'));
+                        setError(t('Этот браузер или менеджер паролей не умеет шифровать с ключом доступа. Хранилище по-прежнему открывается с паролем.'));
                     else
                         setError(t('Не удалось добавить ключ доступа. Попробуйте ещё раз.'));
                 }
@@ -1076,7 +1076,7 @@ import {
                     card.innerHTML = `
                         <h3 class="secret-inline-title" tabindex="-1">${t('Разблокировать хранилище')}</h3>
                         <p class="secret-inline-text"></p>
-                        ${canUsePasskey() ? '<button type="button" class="secret-passkey-btn" data-act="passkey">' + t('Открыть ключом доступа') + '</button>' : ''}
+                        ${canUsePasskey() ? '<button type="button" class="secret-passkey-btn" data-act="passkey">' + t('Открыть с ключом доступа') + '</button>' : ''}
                         <form class="secret-inline-form" novalidate>
                             ${passwordFieldHtml('password', t('Пароль'), 'current-password')}
                             <button type="button" class="secret-link-btn secret-forgot-btn" data-act="forgot">${t('Забыли пароль?')}</button>
@@ -5238,7 +5238,8 @@ import {
         box.set(sealed, iv.length);
         return securityBase64(box);
     }
-    const SECURITY_LIMIT = 300;
+    const SECURITY_LIMIT = 80;
+    const SECURITY_KEY = 'startNotes.welcomeSecret';
     const SECURITY_PAUSE = 650;
     let securityIdle = null;
     async function updateSecurityCipher() {
@@ -5285,31 +5286,31 @@ import {
         const input = root.querySelector('.cipher-input');
         root.querySelector('.cipher-limit').hidden = input.value.length < SECURITY_LIMIT;
     }
-    function renderSecurityLimit() {
-        const root = document.getElementById('welcomeSecurity');
-        if (!root)
-            return;
-        const box = root.querySelector('.cipher-limit');
-        const link = root.querySelector('.cipher-limit-link');
-        link.textContent = t('Войдите');
-        box.replaceChildren(tFragment('Хотите продолжить писать заметку? {login}, чтобы увидеть все функции заметок.', { login: link }));
-    }
     function setupWelcomeSecurity() {
         const root = document.getElementById('welcomeSecurity');
         if (!root)
             return;
         const input = root.querySelector('.cipher-input');
         input.maxLength = SECURITY_LIMIT;
-        renderSecurityLimit();
-        document.addEventListener(LANGUAGE_EVENT, renderSecurityLimit);
+        try {
+            const saved = localStorage.getItem(SECURITY_KEY);
+            if (saved)
+                input.value = saved.slice(0, SECURITY_LIMIT);
+        }
+        catch (e) { }
+        updateSecurityLimit();
+        if (input.value)
+            updateSecurityCipher();
         input.addEventListener('input', () => {
             updateSecurityLimit();
             scheduleSecurityCipher();
-        });
-        root.querySelector('.cipher-limit-link').addEventListener('click', () => {
-            const auth = el.welcomeScreen.querySelector('.welcome-auth');
-            if (auth)
-                auth.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            try {
+                if (input.value)
+                    localStorage.setItem(SECURITY_KEY, input.value);
+                else
+                    localStorage.removeItem(SECURITY_KEY);
+            }
+            catch (e) { }
         });
     }
     function setupWelcomeReveal() {
@@ -5340,6 +5341,7 @@ import {
         items.forEach(node => observer.observe(node));
     }
     const DRAFT_KEY = 'startNotes.welcomeDraft';
+    const DEMO_LIMIT = 200;
     const DRAFT_TAGS = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'S', 'STRIKE', 'U', 'UL', 'OL', 'LI', 'SPAN']);
     function sanitizeDraft(html) {
         const doc = new DOMParser().parseFromString(`<body>${html || ''}</body>`, 'text/html');
@@ -5416,6 +5418,38 @@ import {
         showToast(t('Черновик стал заметкой'), t('Заметка с главной страницы теперь в вашем списке.'));
     }
     let demoSaveTimer = null;
+    function demoBodyLength(body) {
+        return (body.textContent || '').length;
+    }
+    function clampDemoBody(body) {
+        let extra = demoBodyLength(body) - DEMO_LIMIT;
+        if (extra <= 0)
+            return false;
+        const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode())
+            nodes.push(walker.currentNode);
+        for (let i = nodes.length - 1; i >= 0 && extra > 0; i--) {
+            const value = nodes[i].nodeValue;
+            const cut = Math.min(extra, value.length);
+            nodes[i].nodeValue = value.slice(0, value.length - cut);
+            extra -= cut;
+        }
+        return true;
+    }
+    function syncDemoLimit(root) {
+        const body = root.querySelector('.welcome-demo-body');
+        const status = root.querySelector('.welcome-demo-status:not(.welcome-demo-limit)');
+        const note = root.querySelector('.welcome-demo-limit');
+        const reached = demoBodyLength(body) >= DEMO_LIMIT;
+        root.classList.toggle('at-limit', reached);
+        [[status, !reached], [note, reached]].forEach(([node, shown]) => {
+            if (!node)
+                return;
+            node.hidden = !shown;
+            node.style.display = shown ? '' : 'none';
+        });
+    }
     function resetWelcomeDemo() {
         const root = $('#welcomeDemo');
         if (!root)
@@ -5423,6 +5457,7 @@ import {
         root.querySelector('.welcome-demo-name').value = '';
         root.querySelector('.welcome-demo-body').innerHTML = '';
         root.classList.remove('has-draft');
+        syncDemoLimit(root);
     }
     function setupWelcomeDemo() {
         const root = $('#welcomeDemo');
@@ -5434,8 +5469,10 @@ import {
         if (!draftIsEmpty(draft)) {
             name.value = draft.title;
             body.innerHTML = draft.content;
+            clampDemoBody(body);
             root.classList.add('has-draft');
         }
+        syncDemoLimit(root);
         const save = () => {
             clearTimeout(demoSaveTimer);
             demoSaveTimer = setTimeout(() => {
@@ -5598,7 +5635,30 @@ import {
             }
             save();
         });
-        body.addEventListener('input', save);
+        body.addEventListener('beforeinput', e => {
+            if (!e.inputType || !e.inputType.startsWith('insert'))
+                return;
+            const sel = window.getSelection();
+            const selected = sel.rangeCount && body.contains(sel.anchorNode) ? sel.toString().length : 0;
+            const room = DEMO_LIMIT - demoBodyLength(body) + selected;
+            const data = typeof e.data === 'string' ? e.data : '';
+            if (e.inputType === 'insertText' && data) {
+                if (data.length <= room)
+                    return;
+                e.preventDefault();
+                if (room > 0)
+                    document.execCommand('insertText', false, data.slice(0, room));
+            }
+            else if (room <= 0 && e.cancelable) {
+                e.preventDefault();
+            }
+        });
+        body.addEventListener('input', () => {
+            if (clampDemoBody(body))
+                placeCursorAtEnd(body.lastElementChild || body);
+            syncDemoLimit(root);
+            save();
+        });
         name.addEventListener('input', save);
         name.addEventListener('keydown', e => {
             if (e.key === 'Enter') {

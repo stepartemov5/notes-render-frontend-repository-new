@@ -158,6 +158,7 @@
                     <div class="note-content welcome-demo-body" contenteditable="true" data-placeholder="Список покупок, идея на миллион или план на выходные…"></div>
                     <div class="welcome-demo-foot">
                         <span class="welcome-demo-status">Черновик сохранён в браузере</span>
+                        <span class="welcome-demo-status welcome-demo-limit" hidden>Хотите продолжить писать заметку? Войдите, чтобы увидеть все функции заметок.</span>
                         <button type="button" class="welcome-demo-clear">Стереть</button>
                     </div>
                 </div>
@@ -170,7 +171,7 @@
                 <div class="cipher-demo">
                     <div class="cipher-pane">
                         <span class="cipher-label">Текст заметки</span>
-                        <textarea class="cipher-input" rows="4" maxlength="300" spellcheck="false" placeholder="Напишите какой-нибудь секрет"></textarea>
+                        <textarea class="cipher-input" rows="4" maxlength="80" spellcheck="false" placeholder="Напишите какой-нибудь секрет"></textarea>
                     </div>
                     <span class="cipher-arrow"><span class="security-lock"></span></span>
                     <div class="cipher-pane cipher-pane-out">
@@ -178,7 +179,7 @@
                         <div class="cipher-output" data-placeholder="Здесь появится шифр"></div>
                     </div>
                 </div>
-                <p class="cipher-limit" hidden>В настоящих секретных заметках место не кончается, и всё форматирование на месте. <button type="button" class="cipher-limit-link">Войдите</button>, чтобы попробовать.</p>
+                <p class="cipher-limit" hidden>Войдите, чтобы продолжить писать.</p>
                 <p class="cipher-note">Настоящий AES-256 прямо на этой странице. Ключ шифрования защищён вашим паролем и не покидает браузер. Каждое сохранение шифруется заново, поэтому даже одинаковый текст каждый раз выглядит по-разному.</p>
             </section>
 

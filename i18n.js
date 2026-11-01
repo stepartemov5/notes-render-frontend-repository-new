@@ -41,23 +41,6 @@ export function t(text, vars) {
     return result;
 }
 
-export function tFragment(text, nodes) {
-    const fragment = document.createDocumentFragment();
-
-    translated(text).split(/(\{\w+\})/).forEach(part => {
-        const name = part.slice(1, -1);
-
-        if (/^\{\w+\}$/.test(part) && nodes[name]) {
-            fragment.append(nodes[name]);
-        }
-        else if (part) {
-            fragment.append(part);
-        }
-    });
-
-    return fragment;
-}
-
 const statics = { title: null, texts: [], attributes: [] };
 
 function applyStatic() {
@@ -173,15 +156,15 @@ const EN = {
     "Пароль изменён": "Password changed",
     "Не удалось сменить пароль. Проверьте подключение и попробуйте ещё раз.": "Couldn't change the password. Check your connection and try again.",
     "Ожидание ключа доступа…": "Waiting for passkey…",
-    "Этот браузер не умеет открывать хранилище ключом доступа. Откройте его паролем.": "This browser can't open the vault with a passkey. Use your password.",
-    "Подходящий ключ доступа не найден или вход отменён. Если ключ сохранён в другом браузере, откройте хранилище паролем.": "No matching passkey found, or sign-in was cancelled. If the passkey is saved in another browser, open the vault with your password.",
-    "Этот ключ доступа не добавлен к хранилищу. Откройте хранилище паролем и добавьте его.": "This passkey isn't added to the vault. Open the vault with your password and add it.",
-    "Не удалось открыть хранилище ключом доступа. Попробуйте пароль.": "Couldn't open the vault with a passkey. Try your password.",
+    "Этот браузер не умеет открывать хранилище с ключом доступа. Откройте его с паролем.": "This browser can't open the vault with a passkey. Use your password.",
+    "Подходящий ключ доступа не найден или вход отменён. Если ключ сохранён в другом браузере, откройте хранилище с паролем.": "No matching passkey found, or sign-in was cancelled. If the passkey is saved in another browser, open the vault with your password.",
+    "Этот ключ доступа не добавлен к хранилищу. Откройте хранилище с паролем и добавьте его.": "This passkey isn't added to the vault. Open the vault with your password and add it.",
+    "Не удалось открыть хранилище с ключом доступа. Попробуйте пароль.": "Couldn't open the vault with a passkey. Try your password.",
     "Ключ доступа добавлен": "Passkey added",
     "Теперь хранилище можно открыть без пароля.": "You can now open the vault without a password.",
     "Этот ключ доступа уже добавлен.": "This passkey is already added.",
     "Ключи доступа работают только на домене сервиса по https или на localhost, а не по IP-адресу.": "Passkeys only work on the service domain over https or on localhost, not via an IP address.",
-    "Этот браузер или менеджер паролей не умеет шифровать ключом доступа. Хранилище по-прежнему открывается паролем.": "This browser or password manager can't encrypt with a passkey. The vault still opens with your password.",
+    "Этот браузер или менеджер паролей не умеет шифровать с ключом доступа. Хранилище по-прежнему открывается с паролем.": "This browser or password manager can't encrypt with a passkey. The vault still opens with your password.",
     "Не удалось добавить ключ доступа. Попробуйте ещё раз.": "Couldn't add the passkey. Try again.",
     "Сохранение…": "Saving…",
     "Ключ доступа убран": "Passkey removed",
@@ -201,7 +184,7 @@ const EN = {
     "Подтвердить": "Confirm",
     "Чтобы сменить пароль, вернитесь назад.": "To change the password, go back.",
     "Разблокировать хранилище": "Unlock the vault",
-    "Открыть ключом доступа": "Open with passkey",
+    "Открыть с ключом доступа": "Open with passkey",
     "Пароль": "Password",
     "Забыли пароль?": "Forgot password?",
     "Открыть": "Open",
@@ -407,6 +390,6 @@ const EN = {
     "Напишите какой-нибудь секрет": "Spill a secret",
     "Сервер получает": "What the server sees",
     "Ключ шифрования защищён вашим паролем и не покидает браузер. Каждое сохранение шифруется заново, поэтому даже одинаковый текст каждый раз выглядит по-разному.": "The encryption key is protected by your password and never leaves the browser. Every save is encrypted from scratch, so even the same text looks different every time.",
-    "Хотите продолжить писать заметку? {login}, чтобы увидеть все функции заметок.": "Want to keep writing? {login} to unlock all Notes features.",
-    "Войдите": "Sign in"
+    "Хотите продолжить писать заметку? Войдите, чтобы увидеть все функции заметок.": "Want to keep writing? Sign in to unlock all Notes features.",
+    "Войдите, чтобы продолжить писать.": "Sign in to continue writing."
 };
