@@ -3643,6 +3643,7 @@ import {
         dropdown.setAttribute('role', 'radiogroup');
         dropdown.setAttribute('aria-label', t('Где искать'));
         dropdown.innerHTML = `
+            <span class="search-filter-caption">${t('фильтр поиска')}</span>
             <div class="search-filter-seg" style="--i:${Math.max(0, filterKeys.indexOf(searchFilter))}">
                 <span class="search-filter-thumb" aria-hidden="true"></span>
                 ${filterKeys.map(key => `
