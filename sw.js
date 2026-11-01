@@ -1,4 +1,4 @@
-const CACHE = "startNotes-v5";
+const CACHE = "startNotes-v6";
 
 const SHELL = [
     "./",

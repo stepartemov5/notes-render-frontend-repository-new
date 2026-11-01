@@ -315,7 +315,6 @@ const EN = {
     "Светлая": "Light",
     "Тёмная": "Dark",
     "Системная": "System",
-    "Заметки": "Notes",
     "Место для мыслей.": "A place for thoughts.",
     "И не только.": "And more.",
     "Редактор для документов, работы, личных заметок и просто гениальных мыслей в 3 часа ночи.": "An editor for documents, work, personal notes and simply brilliant 3 a.m. thoughts.",
@@ -324,8 +323,8 @@ const EN = {
     "Встреча с клиентом": "Client meeting",
     "вчера": "yesterday",
     "Релиз 2.4": "Release 2.4",
-    "12 окт.": "Oct 12",
-    "отправить отчёт до 12:00": "send the report by 12:00",
+    "23 окт.": "Oct 23",
+    "отправить отчёт до 9:00": "send the report by 9:00",
     "ответить на письма": "reply to emails",
     "подготовить слайды к четвергу": "prepare slides for Thursday",
     "пароль от стенда: q7Lp-2fX9": "staging password: q7Lp-2fX9",
@@ -390,6 +389,6 @@ const EN = {
     "Напишите какой-нибудь секрет": "Spill a secret",
     "Сервер получает": "What the server sees",
     "Ключ шифрования защищён вашим паролем и не покидает браузер. Каждое сохранение шифруется заново, поэтому даже одинаковый текст каждый раз выглядит по-разному.": "The encryption key is protected by your password and never leaves the browser. Every save is encrypted from scratch, so even the same text looks different every time.",
-    "Хотите продолжить писать заметку? Войдите, чтобы увидеть все функции заметок.": "Want to keep writing? Sign in to unlock all Notes features.",
+    "Хотите продолжить писать заметку? Войдите, чтобы увидеть все функции заметок.": "Want to keep writing? Sign in to unlock everything codeq notes can do.",
     "Войдите, чтобы продолжить писать.": "Sign in to continue writing."
 };

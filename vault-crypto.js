@@ -293,7 +293,7 @@ export async function addVaultPasskey(meta, key, user) {
 
     const credential = await navigator.credentials.create({
         publicKey: {
-            rp: { name: 'Заметки' },
+            rp: { name: 'codeq notes' },
             user: {
                 id: encoder.encode(String(user.id)).slice(0, 64),
                 name: user.name,

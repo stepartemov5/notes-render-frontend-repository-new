@@ -17,8 +17,8 @@ import {
 (() => {
     'use strict';
     translateDom(document.body);
-    const APP_VERSION = '5.10.23';
-    const APP_BUILD = new Date(2026, 9, 23);
+    const APP_VERSION = '5.11.0';
+    const APP_BUILD = new Date(2026, 10, 1);
     function appBuildDate() {
         return APP_BUILD.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(' г.', '');
     }
@@ -992,8 +992,8 @@ import {
                     }
                     const nextMeta = await addVaultPasskey(vaultMeta, vaultKey, {
                         id: currentUser.uid,
-                        name: currentUser.email || currentUser.displayName || 'Заметки',
-                        displayName: currentUser.displayName || currentUser.email || 'Заметки'
+                        name: currentUser.email || currentUser.displayName || 'codeq notes',
+                        displayName: currentUser.displayName || currentUser.email || 'codeq notes'
                     });
                     await saveVaultMeta(nextMeta);
                     vaultMeta = nextMeta;

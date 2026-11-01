@@ -1,6 +1,6 @@
 {
-  "name": "Заметки",
-  "short_name": "Заметки",
+  "name": "codeq notes",
+  "short_name": "codeq notes",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
