@@ -549,6 +549,7 @@ body.editor-fullscreen .sidebar {
     transform: translateY(-100%);
     transition: transform 0.3s var(--ease);
     overflow-y: auto;
+    user-select: none;
 }
  
 .settings-panel.open {

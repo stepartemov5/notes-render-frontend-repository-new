@@ -405,6 +405,96 @@ import {
     async function saveVaultMeta(meta) {
         await setDoc(doc(db, "users", currentUser.uid, "vault", "meta"), meta);
     }
+    const LEGAL_SEEN_KEY = 'startNotes.legalSeen.';
+    const LEGAL_DOCS = {
+        terms: { name: 'Условия использования', open: 'Открыть условия' },
+        privacy: { name: 'Политика конфиденциальности', open: 'Открыть политику' }
+    };
+    let legalNotification = null;
+    function readLegalSeen(uid) {
+        try {
+            const seen = JSON.parse(localStorage.getItem(LEGAL_SEEN_KEY + uid));
+            return seen && typeof seen === 'object' ? seen : {};
+        }
+        catch (e) {
+            return {};
+        }
+    }
+    function writeLegalSeen(uid, seen) {
+        try {
+            localStorage.setItem(LEGAL_SEEN_KEY + uid, JSON.stringify(seen));
+        }
+        catch (e) { }
+    }
+    function formatLegalDate(value) {
+        const [y, m, d] = String(value).split('-').map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(' г.', '');
+    }
+    async function checkLegalUpdates(user) {
+        if (!user || legalNotification)
+            return;
+        let data;
+        try {
+            const response = await fetch('/legal.json', { cache: 'no-cache' });
+            if (!response.ok)
+                return;
+            data = await response.json();
+        }
+        catch (e) {
+            return;
+        }
+        if (currentUser !== user)
+            return;
+        const seen = readLegalSeen(user.uid);
+        const joined = String(user.createdAt || '').slice(0, 10);
+        const latest = {};
+        const updated = [];
+        Object.keys(LEGAL_DOCS).forEach(key => {
+            const doc = data && data[key];
+            const current = doc && Array.isArray(doc.versions) && doc.versions[0];
+            if (!current || !/^\d{4}-\d{2}-\d{2}$/.test(current.date))
+                return;
+            latest[key] = current.date;
+            const baseline = seen[key] || joined || current.date;
+            if (current.date > baseline)
+                updated.push({ key, doc, current });
+        });
+        if (!updated.length) {
+            writeLegalSeen(user.uid, { ...seen, ...latest });
+            return;
+        }
+        const title = updated.length > 1
+            ? t('Обновились условия и политика конфиденциальности')
+            : updated[0].key === 'terms'
+                ? t('Обновились условия использования')
+                : t('Обновилась политика конфиденциальности');
+        const lines = updated.map(({ key, current }) => {
+            const summary = current.summary && (current.summary[lang] || current.summary.ru);
+            return `
+                <div class="notification-text"><span><strong>${escapeHtml(t(LEGAL_DOCS[key].name))}</strong> · ${escapeHtml(t('действует с {date}', { date: formatLegalDate(current.date) }))}${summary ? `. ${escapeHtml(summary)}` : ''}</span></div>
+            `;
+        }).join('');
+        const buttons = updated.map(({ key, doc }) => `
+            <button class="notification-cancel" type="button" data-legal-open="${escapeHtml(doc.path || '/' + key)}">${t(LEGAL_DOCS[key].open)}</button>
+        `).join('');
+        const { el: n, hide } = showNotification(`
+            <div class="notification-title">${title}</div>
+            ${lines}
+            <div class="notification-actions">
+                ${buttons}
+                <button class="notification-confirm" type="button">${t('Понятно')}</button>
+            </div>
+        `);
+        legalNotification = { el: n, hide };
+        n.querySelectorAll('[data-legal-open]').forEach(btn => {
+            btn.addEventListener('click', () => window.open(btn.dataset.legalOpen, '_blank', 'noopener,noreferrer'));
+        });
+        n.querySelector('.notification-confirm').addEventListener('click', () => {
+            writeLegalSeen(user.uid, { ...readLegalSeen(user.uid), ...latest });
+            hide();
+            legalNotification = null;
+        });
+    }
     function showToast(title, text, ms = 4500) {
         const toast = showNotification(`
             <div class="notification-title">${escapeHtml(title)}</div>
@@ -418,7 +508,7 @@ import {
             return;
         const { el: n, hide } = showNotification(`
             <div class="notification-title">${t('Нужно войти заново')}</div>
-            <div class="notification-text">${t('Сессия истекла или нет доступа к заметкам. Войдите в аккаунт ещё раз.')}</div>
+            <div class="notification-text">${t('Сессия завершилась или доступ к заметкам закрыт. После входа всё вернётся на место.')}</div>
             <div class="notification-actions">
                 <button class="notification-cancel" type="button">${t('Закрыть')}</button>
                 <button class="notification-confirm" type="button">${t('Войти')}</button>
@@ -460,7 +550,7 @@ import {
         if (active && active.secret && !active.locked) {
             const saved = await persistActiveNote();
             if (!saved) {
-                showToast(t('Хранилище не заблокировано'), t('Не удалось сохранить секретную заметку. Проверьте подключение и попробуйте ещё раз.'), 6000);
+                showToast(t('Хранилище не заблокировано'), t('Секретная заметка не сохранилась, а без этого хранилище не закрывается.'), 6000);
                 if (auto)
                     scheduleAutoLock(30 * 1000);
                 return false;
@@ -505,7 +595,7 @@ import {
             }
             catch (error) {
                 handleFirebaseError(error);
-                showToast(t('Не удалось открыть хранилище'), t('Проверьте подключение к интернету и попробуйте ещё раз.'));
+                showToast(t('Хранилище недоступно'), t('Данные хранилища не загрузились с сервера.'));
                 return false;
             }
         }
@@ -718,7 +808,7 @@ import {
                             submitBtn.disabled = false;
                         return;
                     }
-                    setError(t('Слишком много попыток. Подождите {left} сек.', { left }));
+                    setError(t('Слишком много попыток. Следующая — через {left} сек.', { left }));
                     if (submitBtn)
                         submitBtn.disabled = true;
                 };
@@ -772,7 +862,7 @@ import {
                 catch (error) {
                     console.error(error);
                     setBusy(false);
-                    setError(t('Не удалось создать хранилище. Проверьте подключение и попробуйте ещё раз.'));
+                    setError(t('Хранилище не создано: сервер не сохранил данные.'));
                 }
             }
             async function submitUnlock(form) {
@@ -842,7 +932,7 @@ import {
                 catch (error) {
                     console.error(error);
                     setBusy(false);
-                    setError(t('Не удалось удалить. Проверьте подключение и попробуйте ещё раз.'));
+                    setError(t('Сброс не завершился. Часть секретных заметок могла быть уже удалена.'));
                 }
             }
             function setFieldState(input, state, message) {
@@ -938,7 +1028,7 @@ import {
                 catch (error) {
                     console.error(error);
                     setBusy(false);
-                    setError(t('Не удалось сменить пароль. Проверьте подключение и попробуйте ещё раз.'));
+                    setError(t('Пароль не изменён, действует прежний.'));
                 }
             }
             async function finishUnlock(key) {
@@ -972,14 +1062,14 @@ import {
                         catch (e) { }
                         passkeySupport = false;
                         card.querySelector('[data-act="passkey"]')?.remove();
-                        setError(t('Этот браузер не умеет открывать хранилище с ключом доступа. Откройте его с паролем.'));
+                        setError(t('Открытие по ключу доступа здесь не поддерживается. Хранилище открывается паролем.'));
                     }
                     else if (name === 'NotAllowedError' || name === 'AbortError')
-                        setError(t('Подходящий ключ доступа не найден или вход отменён. Если ключ сохранён в другом браузере, откройте хранилище с паролем.'));
+                        setError(t('Вход по ключу доступа отменён или ключ не найден.'));
                     else if (message === 'vault: unknown passkey')
-                        setError(t('Этот ключ доступа не добавлен к хранилищу. Откройте хранилище с паролем и добавьте его.'));
+                        setError(t('Выбранный ключ доступа не привязан к хранилищу.'));
                     else
-                        setError(t('Не удалось открыть хранилище с ключом доступа. Попробуйте пароль.'));
+                        setError(t('Ключ доступа не открыл хранилище. Пароль по-прежнему работает.'));
                     return;
                 }
                 await finishUnlock(key);
@@ -1014,13 +1104,13 @@ import {
                         return;
                     console.error(error);
                     if (name === 'InvalidStateError')
-                        setError(t('Этот ключ доступа уже добавлен.'));
+                        setError(t('Ключ доступа уже привязан к хранилищу.'));
                     else if (name === 'SecurityError')
-                        setError(t('Ключи доступа работают только на домене сервиса по https или на localhost, а не по IP-адресу.'));
+                        setError(t('Ключи доступа работают только на домене сервиса по HTTPS.'));
                     else if (error && error.message === 'vault: prf unsupported')
-                        setError(t('Этот браузер или менеджер паролей не умеет шифровать с ключом доступа. Хранилище по-прежнему открывается с паролем.'));
+                        setError(t('Ключ доступа не поддерживает шифрование, поэтому его не привязать. Хранилище открывается паролем.'));
                     else
-                        setError(t('Не удалось добавить ключ доступа. Попробуйте ещё раз.'));
+                        setError(t('Ключ доступа не привязан к хранилищу.'));
                 }
             }
             async function removePasskey(id) {
@@ -1038,7 +1128,7 @@ import {
                 catch (error) {
                     console.error(error);
                     setBusy(false);
-                    setError(t('Не удалось убрать ключ доступа. Проверьте подключение и попробуйте ещё раз.'));
+                    setError(t('Ключ доступа остался привязан к хранилищу.'));
                 }
             }
             function show(mode, notice) {
@@ -1051,7 +1141,7 @@ import {
                         <form class="secret-inline-form" novalidate>
                             ${passwordFieldHtml('password', t('Пароль (от 8 символов)'), 'new-password', 'new')}
                             <div class="secret-inline-hint" aria-live="polite"></div>
-                            ${passwordFieldHtml('confirm', t('Повторите пароль'), 'new-password', 'new')}
+                            ${passwordFieldHtml('confirm', t('Пароль ещё раз'), 'new-password', 'new')}
                             <div class="secret-inline-error" role="alert"></div>
                             <div class="notification-actions secret-inline-actions">
                                 <button type="button" class="notification-cancel" data-act="cancel">${t('Отмена')}</button>
@@ -1109,7 +1199,7 @@ import {
                             <div class="secret-field-note" data-note="currentPassword"></div>
                             ${passwordFieldHtml('newPassword', t('Новый пароль (от 8 символов)'), 'new-password', 'new')}
                             <div class="secret-inline-hint" aria-live="polite"></div>
-                            ${passwordFieldHtml('confirm', t('Повторите новый пароль'), 'new-password', 'new')}
+                            ${passwordFieldHtml('confirm', t('Новый пароль ещё раз'), 'new-password', 'new')}
                             <div class="secret-inline-error" role="alert"></div>
                             <div class="notification-actions secret-inline-actions">
                                 <button type="button" class="notification-cancel" data-act="cancel">${t('Отмена')}</button>
@@ -1331,7 +1421,7 @@ import {
             card.className = 'note-card secret-card secret-card-broken';
             card.innerHTML = `
                 <div class="note-card-main">
-                    <div class="note-card-title">${t('Не удалось расшифровать')}</div>
+                    <div class="note-card-title">${t('Заметка не расшифрована')}</div>
                     <div class="note-card-preview">${t('Заметка повреждена или зашифрована другим паролем.')}</div>
                     <div class="note-card-date">${formatDate(note.updatedAt)}</div>
                 </div>
@@ -1442,7 +1532,7 @@ import {
             return;
         }
         if (!vaultMetaLoaded) {
-            list.appendChild(createSecretBox(t('Хранилище не отвечает'), t('Похоже, интернет решил отдохнуть. Проверьте подключение.'), t('Повторить'), async () => {
+            list.appendChild(createSecretBox(t('Хранилище недоступно'), t('Данные хранилища не загрузились с сервера.'), t('Обновить'), async () => {
                 try {
                     await loadVaultMeta();
                 }
@@ -1716,7 +1806,7 @@ import {
             updateSpaceSetting();
             applySpaces();
             handleFirebaseError(error);
-            showToast(t('Не удалось сохранить настройку'), t('Проверьте подключение и попробуйте ещё раз.'));
+            showToast(t('Настройка не сохранена'), t('Вернулось прежнее значение.'));
             return;
         }
         if (!navigator.onLine)
@@ -2258,7 +2348,7 @@ import {
         }
         const saved = await persistActiveNote(true);
         if (!saved) {
-            showToast(t('Не удалось сохранить заметку'), t('Сначала восстановите подключение и попробуйте ещё раз.'));
+            showToast(t('Заметка не сохранена'), t('Засекретить можно только сохранённую заметку.'));
             return;
         }
         const wasPinned = !!note.pinned;
@@ -2281,7 +2371,7 @@ import {
             renderNotesList();
             renderEditor();
             handleFirebaseError(error);
-            showToast(t('Не удалось засекретить'), t('Заметка осталась обычной. Попробуйте ещё раз.'));
+            showToast(t('Заметка осталась обычной'), t('Изменение не сохранилось на сервере.'));
         }
     }
     async function createNote(isSecret = false) {
@@ -3065,7 +3155,7 @@ import {
         }
         catch (error) {
             handleFirebaseError(error);
-            showToast(t('Не всё удалилось'), t('Возможно, проблемы с интернетом.'));
+            showToast(t('Корзина очищена не полностью'), t('Оставшиеся заметки снова в корзине.'));
             try {
                 await loadTrash();
                 renderTrash();
@@ -3302,10 +3392,10 @@ import {
             handleFirebaseError(error);
             const code = error && error.code;
             if (code === 'auth/account-exists-with-different-credential') {
-                showToast(t('Не получилось войти'), t('Этот адрес уже связан с другим способом входа. Попробуйте тот, через который создавался аккаунт.'), 6000);
+                showToast(t('Вход не выполнен'), t('Почта уже привязана к другому способу входа. Нужен тот, через который создан аккаунт.'), 6000);
             }
             else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-                showToast(t('Не получилось войти'), t('Похоже, вход не завершился. Проверьте подключение и попробуйте ещё раз.'));
+                showToast(t('Вход не выполнен'), t('Страница входа не открылась.'));
             }
         }
         finally {
@@ -4708,8 +4798,8 @@ import {
         const { el: n, hide } = showNotification(`
         <div class="notification-title">${t('Нет подключения к интернету.')}</div>
         <div class="notification-text">
-            ${t('Некоторые заметки могут быть временно недоступны.')}
-            ${t('Рекомендуем проверить подключение к интернету и обновить страницу.')}
+            ${t('Показаны заметки, сохранённые на устройстве.')}
+            ${t('Изменения отправятся на сервер, когда связь вернётся.')}
         </div>
         <div class="notification-actions">
             <button class="notification-confirm sync-reload-btn" type="button">
@@ -4905,6 +4995,7 @@ import {
             activeNoteId = pickNextNoteId();
             await importWelcomeDraft();
             revealApp();
+            checkLegalUpdates(user);
         }
         else {
             notes = [];
