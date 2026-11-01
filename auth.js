@@ -10,6 +10,11 @@ const PROVIDER_OPTIONS = {
     figma: { queryParams: { scope: "current_user:read" } }
 };
 
+const GOOGLE_CLIENT_ID = "377364054650-odpgjoa8h2huu9lrgfo9ok6m7bjh3jpr.apps.googleusercontent.com";
+const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+const GOOGLE_ORIGINS = ["https://codeqnotes.onrender.com"];
+const GOOGLE_STATE_KEY = "startNotes.googleState";
+const GOOGLE_STATE_TTL = 15 * 60 * 1000;
 const PENDING_KEY = "startNotes.pendingProvider";
 const PROVIDER_KEY = "startNotes.provider.";
 const PENDING_TTL = 15 * 60 * 1000;
@@ -87,13 +92,83 @@ function mapUser(user) {
     };
 }
 
-export async function login(provider) {
-    if (!PROVIDER_OPTIONS[provider]) {
-        throw new Error(`auth: unknown provider ${provider}`);
+function googleEnabled() {
+    return GOOGLE_ORIGINS.includes(location.origin) && !GOOGLE_CLIENT_ID.startsWith("YOUR-") && !!(window.crypto && crypto.subtle);
+}
+
+function googleRedirectUri() {
+    return location.origin + "/";
+}
+
+function base64url(bytes) {
+    let binary = "";
+    bytes.forEach(b => { binary += String.fromCharCode(b); });
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function randomToken(length) {
+    return base64url(crypto.getRandomValues(new Uint8Array(length)));
+}
+
+async function sha256(text) {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return base64url(new Uint8Array(digest));
+}
+
+function readSession(key) {
+    try {
+        return JSON.parse(sessionStorage.getItem(key) || "null");
     }
+    catch (error) {
+        return null;
+    }
+}
 
-    writeStorage(PENDING_KEY, JSON.stringify({ provider, at: Date.now() }));
+function writeSession(key, value) {
+    try {
+        if (value === null) {
+            sessionStorage.removeItem(key);
+        }
+        else {
+            sessionStorage.setItem(key, JSON.stringify(value));
+        }
+    }
+    catch (error) { }
+}
 
+function clearSupabaseVerifier() {
+    try {
+        Object.keys(localStorage)
+            .filter(key => key.startsWith("sb-") && key.endsWith("-code-verifier"))
+            .forEach(key => localStorage.removeItem(key));
+    }
+    catch (error) { }
+}
+
+async function startGoogleRedirect() {
+    const state = randomToken(24);
+    const verifier = randomToken(48);
+    const challenge = await sha256(verifier);
+
+    writeSession(GOOGLE_STATE_KEY, { state, verifier, at: Date.now() });
+    clearSupabaseVerifier();
+
+    const params = new URLSearchParams({
+        client_id: GOOGLE_CLIENT_ID,
+        redirect_uri: googleRedirectUri(),
+        response_type: "code",
+        scope: "openid email profile",
+        state,
+        code_challenge: challenge,
+        code_challenge_method: "S256",
+        prompt: "select_account"
+    });
+
+    location.assign(`${GOOGLE_AUTH_URL}?${params}`);
+    await new Promise(() => {});
+}
+
+async function supabaseRedirect(provider) {
     const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
@@ -108,6 +183,85 @@ export async function login(provider) {
     }
 
     await new Promise(() => {});
+}
+
+let googleInFlight = false;
+
+async function finishGoogleRedirect() {
+    const url = new URL(location.href);
+    const state = url.searchParams.get("state");
+    const saved = readSession(GOOGLE_STATE_KEY);
+
+    if (!state || !saved || saved.state !== state || Date.now() - saved.at > GOOGLE_STATE_TTL) {
+        return null;
+    }
+
+    googleInFlight = true;
+    writeSession(GOOGLE_STATE_KEY, null);
+
+    const code = url.searchParams.get("code");
+    const failure = url.searchParams.get("error");
+    ["code", "state", "scope", "authuser", "prompt", "hd", "error", "error_description"].forEach(name => url.searchParams.delete(name));
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+
+    try {
+        if (failure || !code) {
+            writeStorage(PENDING_KEY, null);
+            return { cancelled: true };
+        }
+
+        const { data, error } = await supabase.functions.invoke("google-code", {
+            body: { code, verifier: saved.verifier, redirect_uri: googleRedirectUri() }
+        });
+
+        if (error || !data || !data.id_token) {
+            throw error || new Error("google: token exchange failed");
+        }
+
+        const { error: signInError } = await supabase.auth.signInWithIdToken({
+            provider: "google",
+            token: data.id_token
+        });
+
+        if (signInError) {
+            throw signInError;
+        }
+
+        return { ok: true };
+    }
+    catch (error) {
+        console.error("Вход через Google с вашим доменом не удался, переходим на обычный вход.", error);
+        writeStorage(PENDING_KEY, JSON.stringify({ provider: "google", at: Date.now() }));
+
+        try {
+            await supabaseRedirect("google");
+        }
+        catch (redirectError) {
+            writeStorage(PENDING_KEY, null);
+        }
+
+        return { error };
+    }
+    finally {
+        googleInFlight = false;
+    }
+}
+
+const googleCallback = finishGoogleRedirect();
+
+export async function login(provider) {
+    if (!PROVIDER_OPTIONS[provider]) {
+        throw new Error(`auth: unknown provider ${provider}`);
+    }
+
+    writeStorage(PENDING_KEY, JSON.stringify({ provider, at: Date.now() }));
+
+    if (provider === "google" && googleEnabled()) {
+        await startGoogleRedirect();
+        return;
+    }
+
+    await supabaseRedirect(provider);
 }
 
 export async function logout() {
@@ -127,9 +281,10 @@ export async function logout() {
 
 export function onUserChanged(callback) {
     let lastId;
+    let latest = null;
 
-    supabase.auth.onAuthStateChange((event, session) => {
-        const user = mapUser(session && session.user);
+    const deliver = () => {
+        const user = latest;
         const id = user ? user.uid : null;
 
         if (id === lastId) {
@@ -138,5 +293,16 @@ export function onUserChanged(callback) {
 
         lastId = id;
         setTimeout(() => callback(user), 0);
+    };
+
+    supabase.auth.onAuthStateChange((event, session) => {
+        latest = mapUser(session && session.user);
+
+        if (!latest && googleInFlight) {
+            googleCallback.finally(deliver);
+            return;
+        }
+
+        deliver();
     });
 }
