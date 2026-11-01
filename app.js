@@ -5580,19 +5580,21 @@ import {
             return;
         const name = root.querySelector('.welcome-demo-name');
         const body = root.querySelector('.welcome-demo-body');
+        const cipherInput = $('#welcomeSecurity .cipher-input');
+        const isWelcomeEditing = target =>
+            target === name || target === body || target === cipherInput;
         const setDemoEditing = editing => {
             el.welcomeScreen.classList.toggle('demo-editing', editing);
         };
-        root.addEventListener('focusin', event => {
-            if (event.target === name || event.target === body)
+        el.welcomeScreen.addEventListener('focusin', event => {
+            if (isWelcomeEditing(event.target))
                 setDemoEditing(true);
         });
-        root.addEventListener('focusout', event => {
-            if (event.target !== name && event.target !== body)
+        el.welcomeScreen.addEventListener('focusout', event => {
+            if (!isWelcomeEditing(event.target))
                 return;
             requestAnimationFrame(() => {
-                const active = document.activeElement;
-                setDemoEditing(active === name || active === body);
+                setDemoEditing(isWelcomeEditing(document.activeElement));
             });
         });
         const draft = readWelcomeDraft();
