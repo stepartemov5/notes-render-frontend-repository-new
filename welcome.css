@@ -1190,6 +1190,7 @@
         border: 0;
         border-top: 1px solid var(--border, #e5e8ec);
         background: var(--panel, #fff);
+        transition: opacity 0.24s ease, visibility 0s;
     }
 
     .welcome-auth {
@@ -1241,6 +1242,13 @@
     .welcome-screen.visible .welcome-auth > :nth-child(3) { animation-delay: 0.7s; }
     .welcome-screen.visible .welcome-auth > :nth-child(4) { animation-delay: 0.75s; }
     .welcome-screen.visible .welcome-auth > :nth-child(5) { animation-delay: 0.8s; }
+
+    .welcome-screen.demo-editing .welcome-auth-side {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.24s ease, visibility 0s linear 0.24s;
+    }
 }
 
 @keyframes w-sheet {

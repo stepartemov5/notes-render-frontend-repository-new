@@ -5580,6 +5580,21 @@ import {
             return;
         const name = root.querySelector('.welcome-demo-name');
         const body = root.querySelector('.welcome-demo-body');
+        const setDemoEditing = editing => {
+            el.welcomeScreen.classList.toggle('demo-editing', editing);
+        };
+        root.addEventListener('focusin', event => {
+            if (event.target === name || event.target === body)
+                setDemoEditing(true);
+        });
+        root.addEventListener('focusout', event => {
+            if (event.target !== name && event.target !== body)
+                return;
+            requestAnimationFrame(() => {
+                const active = document.activeElement;
+                setDemoEditing(active === name || active === body);
+            });
+        });
         const draft = readWelcomeDraft();
         if (!draftIsEmpty(draft)) {
             name.value = draft.title;
