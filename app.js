@@ -124,6 +124,10 @@ import {
         noteStats: $('#noteStats'),
         noteStatsToggle: $('#noteStatsToggle'),
         whatsNewBtn: $('#whatsNewBtn'),
+        whatsNewPanel: $('#whatsNewPanel'),
+        whatsNewBody: $('#whatsNewBody'),
+        whatsNewBack: $('#whatsNewBack'),
+        providerIconToggle: $('#providerIconToggle'),
         noteSaveStatus: $('#noteSaveStatus'),
         noteSaveRetry: $('#noteSaveRetry'),
         saveStatusToggle: $('#saveStatusToggle'),
@@ -514,13 +518,20 @@ import {
             legalNotification = null;
         });
     }
-    function showToast(title, text, ms = 4500) {
+    function showToast(title, text, ms = 4500, kind = '') {
+        if (!text)
+            return { el: null, hide() { } };
         const toast = showNotification(`
             <div class="notification-title">${escapeHtml(title)}</div>
-            ${text ? `<div class="notification-text">${escapeHtml(text)}</div>` : ''}
+            <div class="notification-text">${escapeHtml(text)}</div>
         `);
+        if (kind)
+            toast.el.classList.add(`notification-${kind}`);
         setTimeout(toast.hide, ms);
         return toast;
+    }
+    function showErrorToast(title, text, ms = 6000) {
+        return showToast(title, text, ms, 'error');
     }
     function showAuthErrorNotification() {
         if (authErrorNotification)
@@ -533,7 +544,7 @@ import {
                 <button class="notification-confirm" type="button">${t('Войти')}</button>
             </div>
         `);
-        n.classList.add('notification-auth');
+        n.classList.add('notification-auth', 'notification-error');
         authErrorNotification = { el: n, hide };
         const dismiss = () => {
             hide();
@@ -570,7 +581,7 @@ import {
         if (active && active.secret && !active.locked) {
             const saved = await persistActiveNote();
             if (!saved) {
-                showToast(t('Хранилище не заблокировано'), t('Секретная заметка не сохранилась, а без этого хранилище не закрывается.'), 6000);
+                showErrorToast(t('Хранилище не заблокировано'), t('Секретная заметка не сохранилась, а без этого хранилище не закрывается.'), 6000);
                 if (auto)
                     scheduleAutoLock(30 * 1000);
                 return false;
@@ -615,7 +626,7 @@ import {
             }
             catch (error) {
                 handleFirebaseError(error);
-                showToast(t('Хранилище недоступно'), t('Данные хранилища не загрузились с сервера.'));
+                showErrorToast(t('Хранилище недоступно'), t('Данные хранилища не загрузились с сервера.'));
                 return false;
             }
         }
@@ -947,7 +958,7 @@ import {
                         await new Promise(r => setTimeout(r, 1000));
                     }
                     close(false);
-                    showToast(t('Хранилище сброшено'), t('Секретные заметки удалены. Можно создать новое.'));
+                    showToast(t('Хранилище сброшено'), t('Секретные заметки удалены. Можно создать новое.'), 4500, 'danger');
                 }
                 catch (error) {
                     console.error(error);
@@ -1043,7 +1054,6 @@ import {
                     await saveVaultMeta(nextMeta);
                     vaultMeta = nextMeta;
                     close(true);
-                    showToast(t('Пароль изменён'));
                 }
                 catch (error) {
                     console.error(error);
@@ -1826,7 +1836,7 @@ import {
             updateSpaceSetting();
             applySpaces();
             handleFirebaseError(error);
-            showToast(t('Настройка не сохранена'), t('Вернулось прежнее значение.'));
+            showErrorToast(t('Настройка не сохранена'), t('Вернулось прежнее значение.'));
             return;
         }
         if (!navigator.onLine)
@@ -2399,7 +2409,7 @@ import {
         }
         const saved = await persistActiveNote(true);
         if (!saved) {
-            showToast(t('Заметка не сохранена'), t('Рассекретить можно только сохранённую заметку.'));
+            showErrorToast(t('Заметка не сохранена'), t('Рассекретить можно только сохранённую заметку.'));
             return;
         }
         const previousEnc = note.enc;
@@ -2412,7 +2422,6 @@ import {
             renderNotesList();
             renderEditor();
             renderSecretSection();
-            showToast(t('Заметка рассекречена'));
         }
         catch (error) {
             note.secret = true;
@@ -2423,7 +2432,7 @@ import {
             renderEditor();
             renderSecretSection();
             handleFirebaseError(error);
-            showToast(t('Заметка осталась секретной'), t('Изменение не сохранилось на сервере.'));
+            showErrorToast(t('Заметка осталась секретной'), t('Изменение не сохранилось на сервере.'));
         }
     }
     async function makeActiveNoteSecret() {
@@ -2440,7 +2449,7 @@ import {
         }
         const saved = await persistActiveNote(true);
         if (!saved) {
-            showToast(t('Заметка не сохранена'), t('Засекретить можно только сохранённую заметку.'));
+            showErrorToast(t('Заметка не сохранена'), t('Засекретить можно только сохранённую заметку.'));
             return;
         }
         const wasPinned = !!note.pinned;
@@ -2453,7 +2462,6 @@ import {
             renderNotesList();
             renderEditor();
             renderSecretSection();
-            showToast(t('Заметка засекречена'));
         }
         catch (error) {
             note.secret = false;
@@ -2463,7 +2471,7 @@ import {
             renderNotesList();
             renderEditor();
             handleFirebaseError(error);
-            showToast(t('Заметка осталась обычной'), t('Изменение не сохранилось на сервере.'));
+            showErrorToast(t('Заметка осталась обычной'), t('Изменение не сохранилось на сервере.'));
         }
     }
     async function createNote(isSecret = false) {
@@ -3245,11 +3253,11 @@ import {
         renderNotesList();
         try {
             await Promise.all(ids.map(id => deleteDoc(doc(db, "users", currentUser.uid, "trash", id))));
-            showToast(t('Корзина очищена'), t('Заметки отправились в далёкий путь: в вечную корзину 🫡'), 3000);
+            showToast(t('Корзина очищена'), t('Заметки отправились в далёкий путь: в вечную корзину 🫡'), 3000, 'danger');
         }
         catch (error) {
             handleFirebaseError(error);
-            showToast(t('Корзина очищена не полностью'), t('Оставшиеся заметки снова в корзине.'));
+            showErrorToast(t('Корзина очищена не полностью'), t('Оставшиеся заметки снова в корзине.'));
             try {
                 await loadTrash();
                 renderTrash();
@@ -3350,6 +3358,7 @@ import {
                 });
             });
         });
+        n.classList.add('notification-danger');
         const timerEl = n.querySelector('.notification-timer');
         let secondsLeft = 5;
         const ticker = setInterval(() => {
@@ -3485,10 +3494,10 @@ import {
             handleFirebaseError(error);
             const code = error && error.code;
             if (code === 'auth/account-exists-with-different-credential') {
-                showToast(t('Вход не выполнен'), t('Почта уже привязана к другому способу входа. Нужен тот, через который создан аккаунт.'), 6000);
+                showErrorToast(t('Вход не выполнен'), t('Почта уже привязана к другому способу входа. Нужен тот, через который создан аккаунт.'), 6000);
             }
             else if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-                showToast(t('Вход не выполнен'), t('Страница входа не открылась.'));
+                showErrorToast(t('Вход не выполнен'), t('Страница входа не открылась.'));
             }
         }
         finally {
@@ -3828,10 +3837,7 @@ import {
         dropdown.className = 'search-menu';
         dropdown.id = 'searchFilterDropdown';
         dropdown.innerHTML = `
-            <div class="search-menu-head">
-                <span class="search-menu-caption">${escapeHtml(t('фильтр поиска'))}</span>
-            </div>
-            <div class="search-menu-list search-menu-grid" role="radiogroup" style="--col:${Math.max(0, filterKeys.indexOf(searchFilter)) % 2};--r:${Math.floor(Math.max(0, filterKeys.indexOf(searchFilter)) / 2)}">
+            <div class="search-menu-list" role="radiogroup" style="--i:${Math.max(0, filterKeys.indexOf(searchFilter))}">
                 <span class="search-menu-thumb" aria-hidden="true"></span>
                 ${filterKeys.map(key => menuOptionHtml({
                     value: key,
@@ -3882,9 +3888,9 @@ import {
         document.addEventListener('keydown', handleFilterDropdownKeydown);
     }
     const SORT_LABELS = {
-        created: 'Создано',
-        updated: 'Изменено',
-        title: 'Название',
+        created: 'Дата создания',
+        updated: 'Дата изменения',
+        title: 'По названию',
     };
     const SORT_ICONS = {
         created: MENU_ICONS.created,
@@ -3967,17 +3973,16 @@ import {
         handleMenuArrowKeys(event, activeSortDropdown);
     }
     function sortOrderButtonsHtml() {
-        return sortDirOrder(sortState.key).map(dir => `
-            <button
-                type="button"
-                role="radio"
-                aria-checked="${dir === sortState.dir}"
-                class="search-menu-seg-option${dir === sortState.dir ? ' active' : ''}"
-                data-dir="${dir}"
-                tabindex="${dir === sortState.dir ? '0' : '-1'}">
-                <span class="search-menu-seg-icon" aria-hidden="true">${dir === 'desc' ? MENU_ICONS.down : MENU_ICONS.up}</span>
-                <span>${escapeHtml(sortDirLabelFor(sortState.key, dir))}</span>
-            </button>`).join('');
+        return sortDirOrder(sortState.key).map(dir => {
+            const label = sortDirLabelFor(sortState.key, dir);
+            return menuOptionHtml({
+                value: dir,
+                attr: 'dir',
+                icon: dir === 'desc' ? MENU_ICONS.down : MENU_ICONS.up,
+                label: label.charAt(0).toUpperCase() + label.slice(1),
+                active: dir === sortState.dir
+            });
+        }).join('');
     }
     function showSortDropdown() {
         if (activeSortDropdown) {
@@ -3989,9 +3994,6 @@ import {
         dropdown.className = 'search-menu search-sort-menu';
         dropdown.id = 'searchSortDropdown';
         dropdown.innerHTML = `
-            <div class="search-menu-head">
-                <span class="search-menu-caption">${escapeHtml(t('сортировка'))}</span>
-            </div>
             <div class="search-menu-list" role="radiogroup" style="--i:${Math.max(0, SORT_KEYS.indexOf(sortState.key))}">
                 <span class="search-menu-thumb" aria-hidden="true"></span>
                 ${SORT_KEYS.map(key => menuOptionHtml({
@@ -4003,11 +4005,8 @@ import {
                 })).join('')}
             </div>
             <div class="search-menu-divider" aria-hidden="true"></div>
-            <div class="search-menu-head">
-                <span class="search-menu-caption">${escapeHtml(t('порядок'))}</span>
-            </div>
-            <div class="search-menu-seg" role="radiogroup" style="--i:${sortDirOrder(sortState.key).indexOf(sortState.dir)}">
-                <span class="search-menu-seg-thumb" aria-hidden="true"></span>
+            <div class="search-menu-list search-menu-order" role="radiogroup" style="--i:${sortDirOrder(sortState.key).indexOf(sortState.dir)}">
+                <span class="search-menu-thumb" aria-hidden="true"></span>
                 ${sortOrderButtonsHtml()}
             </div>
         `;
@@ -4026,7 +4025,7 @@ import {
             }
         });
         const list = dropdown.querySelector('.search-menu-list');
-        const seg = dropdown.querySelector('.search-menu-seg');
+        const seg = dropdown.querySelector('.search-menu-order');
         const optionButtons = Array.from(list.querySelectorAll('.search-menu-option'));
         const applySort = () => {
             saveSortState();
@@ -4034,7 +4033,7 @@ import {
             renderNotesList();
         };
         const bindOrderButtons = () => {
-            const dirButtons = Array.from(seg.querySelectorAll('.search-menu-seg-option'));
+            const dirButtons = Array.from(seg.querySelectorAll('.search-menu-option'));
             dirButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const dir = button.dataset.dir;
@@ -4049,14 +4048,14 @@ import {
         };
         const refreshOrder = () => {
             const focused = seg.contains(document.activeElement);
-            seg.querySelectorAll('.search-menu-seg-option').forEach(button => button.remove());
+            seg.querySelectorAll('.search-menu-option').forEach(button => button.remove());
             seg.insertAdjacentHTML('beforeend', sortOrderButtonsHtml());
             seg.classList.add('no-anim');
             moveMenuThumb(seg, sortDirOrder(sortState.key).indexOf(sortState.dir));
             requestAnimationFrame(() => seg.classList.remove('no-anim'));
             bindOrderButtons();
             if (focused) {
-                const active = seg.querySelector('.search-menu-seg-option.active');
+                const active = seg.querySelector('.search-menu-option.active');
                 if (active)
                     active.focus({ preventScroll: true });
             }
@@ -5196,13 +5195,29 @@ import {
         syncNotification.hide();
         syncNotification = null;
     }
+    function watchPanelHeader(panel, scroller) {
+        if (!panel || !scroller || scroller.dataset.headerWatch)
+            return;
+        scroller.dataset.headerWatch = '1';
+        const sync = () => panel.classList.toggle('is-scrolled', scroller.scrollTop > 2);
+        scroller.addEventListener('scroll', sync, { passive: true });
+        sync();
+    }
+    function measurePanelHeader(panel) {
+        const header = panel && panel.querySelector(':scope > .settings-header');
+        if (header && header.offsetHeight)
+            panel.style.setProperty('--panel-header-h', `${header.offsetHeight}px`);
+    }
     function openSettings() {
         closeFilterDropdown();
         closeSortDropdown();
+        watchPanelHeader(el.settingsPanel, el.settingsPanel.querySelector('.settings-scroll'));
+        measurePanelHeader(el.settingsPanel);
         el.settingsPanel.classList.add('open');
         el.body.classList.add('settings-open');
     }
     function closeSettings() {
+        closeWhatsNewPage();
         el.settingsPanel.classList.remove('open');
         el.body.classList.remove('settings-open');
     }
@@ -5355,6 +5370,7 @@ import {
             playAppEnter();
             img.src = 'exit.svg';
             title.textContent = user.displayName || t('Пользователь');
+            updateProviderIcon();
             try {
                 await Promise.all([
                     loadNotes(),
@@ -5391,6 +5407,7 @@ import {
             selectedNoteIds.clear();
             img.src = 'enter.svg';
             title.textContent = t('Войти');
+            updateProviderIcon();
             el.body.classList.remove('app-loading');
             el.welcomeScreen.classList.add('visible');
             startWelcomeIntro();
@@ -5625,7 +5642,6 @@ import {
         }
         refreshFind(true);
         el.replaceInput.focus();
-        showToast(t('Заменено: {n}', { n: matches.length }), '', 2500);
     }
     function findShortcutAllowed(e) {
         if (!currentUser || (!getNote(activeNoteId) && !getTrashedNote(activeNoteId)))
@@ -6419,6 +6435,8 @@ import {
         renderSecretSection();
     }
     function applyLanguage() {
+        if (el.whatsNewPanel && el.whatsNewPanel.classList.contains('open'))
+            renderWhatsNewPage();
         updateLanguageControls();
         closeAllDropdowns();
         closeAccountPanel();
@@ -6460,6 +6478,44 @@ import {
     let noteStatsTimer = null;
     let noteStatsSelecting = false;
     const WORD_RE = /[\p{L}\p{N}]+(?:['’\-‑][\p{L}\p{N}]+)*/gu;
+    const PROVIDER_ICON_KEY = 'startNotes.providerIcon';
+    const PROVIDER_ICONS = { google: 'google.svg', github: 'github.svg', discord: 'discord.svg' };
+    let providerIconEnabled = true;
+    function loadProviderIconSetting() {
+        try {
+            providerIconEnabled = localStorage.getItem(PROVIDER_ICON_KEY) !== 'false';
+        }
+        catch (e) {
+            providerIconEnabled = true;
+        }
+        updateProviderIcon();
+    }
+    function updateProviderIcon() {
+        if (el.providerIconToggle) {
+            el.providerIconToggle.classList.toggle('active', providerIconEnabled);
+            el.providerIconToggle.setAttribute('aria-pressed', String(providerIconEnabled));
+        }
+        const badge = el.loginBtn && el.loginBtn.querySelector('.login-provider');
+        if (!badge)
+            return;
+        const provider = currentUser && currentUser.provider;
+        const icon = PROVIDER_ICONS[provider];
+        badge.hidden = !icon || !providerIconEnabled;
+        if (icon) {
+            badge.dataset.provider = provider;
+            const img = badge.querySelector('img');
+            if (img.getAttribute('src') !== icon)
+                img.src = icon;
+        }
+    }
+    function setProviderIconEnabled(enabled) {
+        providerIconEnabled = enabled;
+        try {
+            localStorage.setItem(PROVIDER_ICON_KEY, String(enabled));
+        }
+        catch (e) { }
+        updateProviderIcon();
+    }
     function loadNoteStatsSetting() {
         try {
             noteStatsEnabled = localStorage.getItem(NOTE_STATS_KEY) !== 'false';
@@ -6802,44 +6858,77 @@ import {
         }
         catch (e) { }
     }
-    let whatsNewNotification = null;
+    let whatsNewSeenBefore = '';
+    function shippedReleases() {
+        return CHANGELOG
+            .filter(r => compareVersions(r.version, APP_VERSION) <= 0)
+            .sort((x, y) => compareVersions(y.version, x.version));
+    }
+    function setWhatsNewBadge(on) {
+        el.settingsBtn.classList.toggle('has-update', on);
+        if (el.whatsNewBtn)
+            el.whatsNewBtn.classList.toggle('has-update', on);
+    }
     function showWhatsNew(force = false) {
-        if (whatsNewNotification)
+        if (force) {
+            openWhatsNewPage();
             return;
-        const seen = force ? '' : readWhatsNewSeen();
-        const releases = CHANGELOG
-            .filter(r => compareVersions(r.version, APP_VERSION) <= 0 && (force || compareVersions(r.version, seen) > 0))
-            .sort((x, y) => compareVersions(y.version, x.version))
-            .slice(0, force ? 1 : 3);
-        if (!force)
-            writeWhatsNewSeen(APP_VERSION);
-        if (!releases.length)
+        }
+        const seen = readWhatsNewSeen();
+        if (shippedReleases().some(r => compareVersions(r.version, seen) > 0))
+            openWhatsNewPage({ auto: true });
+    }
+    function renderWhatsNewPage() {
+        if (!el.whatsNewBody)
             return;
-        const several = releases.length > 1;
-        const body = releases.map(release => `
-            ${several ? `<div class="whats-new-release">${escapeHtml(release.version)}</div>` : ''}
-            <ul class="whats-new-list">
-                ${release.items.map(item => `<li><strong>${escapeHtml(t(item.title))}</strong>${escapeHtml(t(item.text))}</li>`).join('')}
-            </ul>
+        const releases = shippedReleases().slice(0, 5);
+        el.whatsNewBody.innerHTML = releases.map((release, index) => `
+            <section class="wn-release${index === 0 ? ' current' : ''}">
+                <div class="wn-release-head">
+                    <span class="wn-version">${escapeHtml(release.version)}</span>
+                    ${compareVersions(release.version, whatsNewSeenBefore) > 0 ? `<span class="wn-new">${escapeHtml(t('новое'))}</span>` : ''}
+                </div>
+                <ul class="wn-items">
+                    ${release.items.map(item => `
+                        <li>
+                            <span class="wn-item-title">${escapeHtml(t(item.title))}</span>
+                            <span class="wn-item-text">${escapeHtml(t(item.text))}</span>
+                        </li>`).join('')}
+                </ul>
+            </section>
         `).join('');
-        const { el: n, hide } = showNotification(`
-            <div class="notification-title">${t('Что нового')}${several ? '' : `<span class="whats-new-version">${escapeHtml(releases[0].version)}</span>`}</div>
-            ${body}
-            <div class="notification-actions">
-                <button class="notification-confirm" type="button">${t('Понятно')}</button>
-            </div>
-        `);
-        whatsNewNotification = { el: n, hide };
-        n.querySelector('.notification-confirm').addEventListener('click', () => {
-            hide();
-            whatsNewNotification = null;
-        });
+    }
+    function openWhatsNewPage(options = {}) {
+        if (!el.whatsNewPanel)
+            return;
+        const standalone = !!options.auto && !el.settingsPanel.classList.contains('open');
+        el.whatsNewPanel.classList.toggle('standalone', standalone);
+        const backIcon = el.whatsNewBack && el.whatsNewBack.querySelector('img');
+        if (backIcon)
+            backIcon.src = standalone ? 'close.svg' : 'arrowdown.svg';
+        whatsNewSeenBefore = readWhatsNewSeen();
+        renderWhatsNewPage();
+        writeWhatsNewSeen(APP_VERSION);
+        setWhatsNewBadge(false);
+        const whatsNewScroll = $('#whatsNewScroll');
+        watchPanelHeader(el.whatsNewPanel, whatsNewScroll);
+        measurePanelHeader(el.whatsNewPanel);
+        if (whatsNewScroll) {
+            whatsNewScroll.scrollTop = 0;
+            el.whatsNewPanel.classList.remove('is-scrolled');
+        }
+        el.whatsNewPanel.classList.add('open');
+    }
+    function closeWhatsNewPage() {
+        if (el.whatsNewPanel)
+            el.whatsNewPanel.classList.remove('open');
     }
     function init() {
         loadTheme();
         loadFontSize();
         loadSaveStatusVisibility();
         loadNoteStatsSetting();
+        loadProviderIconSetting();
         window.matchMedia("(prefers-color-scheme: dark)")
             .addEventListener("change", () => {
             if (themeSetting() === "system") {
@@ -6968,10 +7057,14 @@ import {
         el.addTagBtn.addEventListener('click', addTag);
         el.saveStatusToggle.addEventListener('click', toggleSaveStatusVisibility);
         el.noteStatsToggle.addEventListener('click', () => setNoteStatsEnabled(!noteStatsEnabled));
-        el.whatsNewBtn.addEventListener('click', () => {
-            closeSettings();
-            showWhatsNew(true);
-        });
+        if (el.providerIconToggle)
+            el.providerIconToggle.addEventListener('click', () => setProviderIconEnabled(!providerIconEnabled));
+        el.whatsNewBtn.addEventListener('click', openWhatsNewPage);
+        if (el.whatsNewBack)
+            el.whatsNewBack.addEventListener('click', closeWhatsNewPage);
+        const whatsNewDone = $('#whatsNewDone');
+        if (whatsNewDone)
+            whatsNewDone.addEventListener('click', closeWhatsNewPage);
         el.noteSaveRetry.addEventListener('click', () => {
             persistActiveNote(true);
         });

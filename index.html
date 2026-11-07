@@ -227,6 +227,7 @@
                             <img src="close.svg">
                         </button>
                     </div>
+                    <div class="settings-scroll">
                     <div class="settings-group">
                         <div class="settings-title">Тема оформления</div>
                         <div class="theme-selector">
@@ -301,6 +302,17 @@
                             </button>
                         </div>
                     </div>
+                    <div class="settings-group">
+                        <div class="settings-title">Аккаунт</div>
+                        <div class="save-status-setting">
+                            <div class="save-status-setting-info">
+                                <strong>Значок способа входа рядом с именем</strong>
+                            </div>
+                            <button type="button" class="settings-toggle active" id="providerIconToggle" aria-pressed="true">
+                                <span></span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="settings-group" id="spaceSetting" hidden>
                         <div class="settings-title">Способы входа</div>
                         <div class="save-status-setting">
@@ -318,6 +330,22 @@
                         <a href="/privacy" target="_blank" rel="noopener noreferrer" class="settings-link">Политика конфиденциальности</a>
                         <a href="/terms" target="_blank" rel="noopener noreferrer" class="settings-link">Условия использования</a>
                         <p class="settings-version">codeq notes <span data-app-version></span> · сборка от <span data-app-build></span></p>
+                    </div>
+                    </div>
+                </div>
+                <div class="whats-new-panel" id="whatsNewPanel">
+                    <div class="settings-header whats-new-header">
+                        <button type="button" class="whats-new-back" id="whatsNewBack">
+                            <img src="arrowdown.svg">
+                        </button>
+                        <h3>Что нового</h3>
+                        <span class="whats-new-current">v<span data-app-version></span></span>
+                    </div>
+                    <div class="whats-new-scroll" id="whatsNewScroll">
+                        <div class="whats-new-body" id="whatsNewBody"></div>
+                    </div>
+                    <div class="whats-new-footer">
+                        <button type="button" class="whats-new-done" id="whatsNewDone">Понятно</button>
                     </div>
                 </div>
                 <button class="new-note" id="newNoteBtn">
@@ -390,6 +418,7 @@
                     <div>
                         <strong>Войти</strong>
                     </div>
+                    <span class="login-provider" hidden><img src="" alt=""></span>
                 </button>
             </div>
 
