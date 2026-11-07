@@ -43,7 +43,7 @@ body.app-loading .editor > * {
 }
 
 body.app-reveal .editor > *:not(.find-bar) {
-    animation: app-focus 0.55s var(--ease-out) both;
+    animation: app-focus 0.55s var(--ease-out) backwards;
 }
 
 * {
@@ -2946,7 +2946,7 @@ body.app-enter .sidebar-footer,
 body.app-enter .editor-actions,
 body.app-enter .toolbar,
 body.app-enter .editor-footer {
-    animation: app-focus 0.7s var(--ease-out) both;
+    animation: app-focus 0.7s var(--ease-out) backwards;
 }
 
 body.app-enter .notes-list { animation-delay: 0.1s; }
@@ -2956,11 +2956,13 @@ body.app-enter .toolbar { animation-delay: 0.3s; }
 body.app-enter .editor-footer { animation-delay: 0.4s; }
 
 .editor.note-enter .note-title {
-    animation: app-wipe 0.6s var(--ease-out) both;
+    animation:
+        app-wipe-clip 0.6s var(--ease-out) backwards,
+        app-wipe 0.6s var(--ease-out) backwards;
 }
 
 .editor.note-enter .note-content {
-    animation: app-focus 0.45s var(--ease-out) 0.08s both;
+    animation: app-focus 0.45s var(--ease-out) 0.08s backwards;
 }
 
 body.app-enter .editor.note-enter .note-title {
@@ -2982,17 +2984,37 @@ body.app-enter .editor.note-enter .note-content {
     }
 }
 
+@keyframes app-wipe-clip {
+    from { clip-path: inset(-20% 100% -20% 0); }
+    to   { clip-path: inset(-20% -5% -20% 0); }
+}
+
 @keyframes app-wipe {
     from {
-        clip-path: inset(-20% 100% -20% 0);
         filter: blur(6px);
         opacity: 0.3;
     }
     to {
-        clip-path: inset(-20% -5% -20% 0);
         filter: blur(0);
         opacity: 1;
     }
+}
+
+body.app-reveal .editor > *:not(.find-bar),
+body.app-enter .sidebar-top,
+body.app-enter .notes-list,
+body.app-enter .sidebar-footer,
+body.app-enter .editor-actions,
+body.app-enter .toolbar,
+body.app-enter .editor-footer,
+.editor.note-enter .note-content,
+.editor.font-swap .note-title,
+.editor.font-swap .note-content {
+    will-change: opacity, filter;
+}
+
+.editor.note-enter .note-title {
+    will-change: opacity, filter, clip-path;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3021,7 +3043,7 @@ body.google-sans .note-title {
 
 .editor.font-swap .note-title,
 .editor.font-swap .note-content {
-    animation: app-focus 0.4s var(--ease-out) both;
+    animation: app-focus 0.4s var(--ease-out) backwards;
 }
 
 .tags.tagging {
@@ -3987,14 +4009,6 @@ body.lang-out .editor > * {
     font-size: 14px;
     font-weight: 600;
     transition: transform 0.15s var(--ease), filter 0.15s var(--ease);
-}
-
-.whats-new-done:hover {
-    filter: brightness(1.04);
-}
-
-.whats-new-done:active {
-    transform: scale(0.98);
 }
 
 .wn-release {

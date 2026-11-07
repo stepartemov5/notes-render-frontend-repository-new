@@ -409,7 +409,9 @@
 }
 
 .welcome-screen.visible .welcome-preview.replay {
-    animation: w-unfold 0.9s var(--w-ease) both;
+    animation:
+        w-unfold-clip 0.9s var(--w-ease) backwards,
+        w-unfold 0.9s var(--w-ease) backwards;
 }
 
 .preview-replay-btn {
@@ -813,20 +815,24 @@
 
 .welcome-screen.visible .welcome-header,
 .welcome-screen.visible .theme-menu {
-    animation: w-focus 0.7s var(--w-ease) both;
+    animation: w-focus 0.7s var(--w-ease) backwards;
 }
 
 .welcome-screen.visible .welcome-line {
-    animation: w-wipe 0.95s var(--w-ease) both;
+    animation:
+        w-wipe-clip 0.95s var(--w-ease) backwards,
+        w-wipe 0.95s var(--w-ease) backwards;
     animation-delay: var(--d);
 }
 
 .welcome-screen.visible .welcome-lead {
-    animation: w-focus 0.8s var(--w-ease) 0.55s both;
+    animation: w-focus 0.8s var(--w-ease) 0.55s backwards;
 }
 
 .welcome-screen.visible .welcome-preview {
-    animation: w-unfold 1.05s var(--w-ease) 0.7s both;
+    animation:
+        w-unfold-clip 1.05s var(--w-ease) 0.7s backwards,
+        w-unfold 1.05s var(--w-ease) 0.7s backwards;
 }
 
 .welcome-feature.reveal:not(.revealed)::before {
@@ -839,15 +845,15 @@
 }
 
 .welcome-feature.revealed::before {
-    animation: w-rule 0.8s var(--w-ease) var(--rd, 0ms) both;
+    animation: w-rule 0.8s var(--w-ease) var(--rd, 0ms) backwards;
 }
 
 .welcome-feature.revealed > * {
-    animation: w-focus 0.7s var(--w-ease) calc(var(--rd, 0ms) + 180ms) both;
+    animation: w-focus 0.7s var(--w-ease) calc(var(--rd, 0ms) + 180ms) backwards;
 }
 
 .revealed:not(.welcome-feature) {
-    animation: w-rise 0.75s var(--w-ease) var(--rd, 0ms) both;
+    animation: w-rise 0.75s var(--w-ease) var(--rd, 0ms) backwards;
 }
 
 @keyframes w-rise {
@@ -863,12 +869,26 @@
     }
 }
 
-.welcome-screen.visible .welcome-auth-side {
-    animation: w-panel 0.9s var(--w-ease) 0.2s both;
+.welcome-auth-side::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -1px;
+    right: 0;
+    z-index: 1;
+    background: var(--background, #f7f8fa);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    pointer-events: none;
+}
+
+.welcome-screen.visible .welcome-auth-side::after {
+    animation: w-panel 0.9s var(--w-ease) 0.2s backwards;
 }
 
 .welcome-screen.visible .welcome-auth > * {
-    animation: w-focus 0.7s var(--w-ease) both;
+    animation: w-focus 0.7s var(--w-ease) backwards;
 }
 
 .welcome-screen.visible .welcome-auth > :nth-child(1) { animation-delay: 0.45s; }
@@ -878,17 +898,20 @@
 .welcome-screen.visible .welcome-auth > :nth-child(5) { animation-delay: 0.73s; }
 
 .welcome-screen.visible .welcome-footer {
-    animation: w-focus 0.8s var(--w-ease) 1.6s both;
+    animation: w-focus 0.8s var(--w-ease) 1.6s backwards;
+}
+
+@keyframes w-wipe-clip {
+    from { clip-path: inset(-15% 100% -15% 0); }
+    to   { clip-path: inset(-15% -2% -15% 0); }
 }
 
 @keyframes w-wipe {
     from {
-        clip-path: inset(-15% 100% -15% 0);
         filter: blur(10px);
         opacity: 0.3;
     }
     to {
-        clip-path: inset(-15% -2% -15% 0);
         filter: none;
         opacity: 1;
     }
@@ -905,14 +928,17 @@
     }
 }
 
+@keyframes w-unfold-clip {
+    from { clip-path: inset(0 0 100% 0 round 16px); }
+    to   { clip-path: inset(0 0 0 0 round 16px); }
+}
+
 @keyframes w-unfold {
     from {
-        clip-path: inset(0 0 100% 0 round 16px);
         transform: perspective(1400px) rotateX(10deg);
         opacity: 0.4;
     }
     to {
-        clip-path: inset(0 0 0 0 round 16px);
         transform: none;
         opacity: 1;
     }
@@ -924,8 +950,8 @@
 }
 
 @keyframes w-panel {
-    from { clip-path: inset(0 0 0 100%); }
-    to   { clip-path: inset(0 0 0 0); }
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
 }
 
 @media (max-width: 1100px) {
@@ -1004,7 +1030,12 @@
     }
 
     .welcome-screen.visible .welcome-auth-side {
-        animation: w-focus 0.8s var(--w-ease) 0.3s both;
+        animation: w-focus 0.8s var(--w-ease) 0.3s backwards;
+    }
+
+    .welcome-screen.visible .welcome-auth-side::after {
+        display: none;
+        animation: none;
     }
 }
 
@@ -1234,7 +1265,7 @@
     }
 
     .welcome-screen.visible .welcome-auth-side {
-        animation: w-sheet 0.8s var(--w-ease) 0.35s both;
+        animation: w-sheet 0.8s var(--w-ease) 0.35s backwards;
     }
 
     .welcome-screen.visible .welcome-auth > :nth-child(1) { animation-delay: 0.6s; }
@@ -1285,7 +1316,7 @@
     }
 
     .welcome-screen.visible .welcome-more {
-        animation: w-focus 0.8s var(--w-ease) 1.6s both;
+        animation: w-focus 0.8s var(--w-ease) 1.6s backwards;
     }
 }
 
@@ -1609,7 +1640,7 @@
     font-size: 13px;
     line-height: 1.6;
     user-select: none;
-    animation: w-rise 0.45s var(--w-ease) both;
+    animation: w-rise 0.45s var(--w-ease) backwards;
 }
 
 .cipher-limit[hidden] {
