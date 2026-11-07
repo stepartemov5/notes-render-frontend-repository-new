@@ -5195,24 +5195,9 @@ import {
         syncNotification.hide();
         syncNotification = null;
     }
-    function watchPanelHeader(panel, scroller) {
-        if (!panel || !scroller || scroller.dataset.headerWatch)
-            return;
-        scroller.dataset.headerWatch = '1';
-        const sync = () => panel.classList.toggle('is-scrolled', scroller.scrollTop > 2);
-        scroller.addEventListener('scroll', sync, { passive: true });
-        sync();
-    }
-    function measurePanelHeader(panel) {
-        const header = panel && panel.querySelector(':scope > .settings-header');
-        if (header && header.offsetHeight)
-            panel.style.setProperty('--panel-header-h', `${header.offsetHeight}px`);
-    }
     function openSettings() {
         closeFilterDropdown();
         closeSortDropdown();
-        watchPanelHeader(el.settingsPanel, el.settingsPanel.querySelector('.settings-scroll'));
-        measurePanelHeader(el.settingsPanel);
         el.settingsPanel.classList.add('open');
         el.body.classList.add('settings-open');
     }
@@ -6911,12 +6896,8 @@ import {
         writeWhatsNewSeen(APP_VERSION);
         setWhatsNewBadge(false);
         const whatsNewScroll = $('#whatsNewScroll');
-        watchPanelHeader(el.whatsNewPanel, whatsNewScroll);
-        measurePanelHeader(el.whatsNewPanel);
-        if (whatsNewScroll) {
+        if (whatsNewScroll)
             whatsNewScroll.scrollTop = 0;
-            el.whatsNewPanel.classList.remove('is-scrolled');
-        }
         el.whatsNewPanel.classList.add('open');
     }
     function closeWhatsNewPage() {
