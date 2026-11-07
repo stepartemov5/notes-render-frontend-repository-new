@@ -1,0 +1,18 @@
+{
+    "terms": {
+        "path": "/terms",
+        "versions": [
+            {
+                "date": "2026-10-31"
+            }
+        ]
+    },
+    "privacy": {
+        "path": "/privacy",
+        "versions": [
+            {
+                "date": "2026-10-31"
+            }
+        ]
+    }
+}

@@ -561,18 +561,29 @@ body.editor-fullscreen .sidebar {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    padding-top: var(--panel-header-h, 71px);
     overflow-y: auto;
     overscroll-behavior: contain;
 }
  
 .settings-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 20px 16px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    border-bottom: 1px solid transparent;
     background: var(--panel);
+    transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background-color 0.2s var(--ease);
+}
+
+.is-scrolled > .settings-header {
+    border-bottom-color: var(--border);
+    box-shadow: 0 8px 18px -12px rgba(0, 0, 0, 0.28);
 }
  
 .settings-header h3 {
@@ -3946,6 +3957,7 @@ body.lang-out .editor > * {
 .whats-new-scroll {
     flex: 1 1 auto;
     min-height: 0;
+    padding-top: var(--panel-header-h, 71px);
     overflow-y: auto;
     overscroll-behavior: contain;
 }
@@ -3975,6 +3987,14 @@ body.lang-out .editor > * {
     font-size: 14px;
     font-weight: 600;
     transition: transform 0.15s var(--ease), filter 0.15s var(--ease);
+}
+
+.whats-new-done:hover {
+    filter: brightness(1.04);
+}
+
+.whats-new-done:active {
+    transform: scale(0.98);
 }
 
 .wn-release {
@@ -4147,4 +4167,10 @@ body.lang-out .editor > * {
 
 .search-menu-list.no-anim .search-menu-thumb {
     transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .settings-header {
+        transition: none;
+    }
 }
