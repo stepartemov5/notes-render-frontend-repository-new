@@ -17,7 +17,7 @@ import {
 (() => {
     'use strict';
     translateDom(document.body);
-    const APP_VERSION = '5.10.23';
+    const APP_VERSION = '5.11.0';
     const APP_BUILD = new Date(2026, 9, 23);
     function appBuildDate() {
         return APP_BUILD.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(' г.', '');
@@ -27,12 +27,27 @@ import {
     const SEARCH_FILTER_KEY = 'startNotes.searchFilter';
     const TRASH_TTL = 15 * 24 * 60 * 60 * 1000;
     const VALID_SEARCH_FILTERS = new Set(['all', 'title', 'content', 'tags']);
+    const SORT_KEY = 'startNotes.sort';
+    const SORT_KEYS = ['created', 'updated', 'title'];
+    const SORT_DEFAULT = { key: 'created', dir: 'desc' };
+    const NOTE_STATS_KEY = 'startNotes.noteStats';
+    const WHATS_NEW_KEY = 'startNotes.whatsNewSeen';
     let searchFilter = 'all';
     try {
         const savedSearchFilter = localStorage.getItem(SEARCH_FILTER_KEY);
         searchFilter = VALID_SEARCH_FILTERS.has(savedSearchFilter) ? savedSearchFilter : 'all';
     }
     catch (e) { }
+    function loadSortState() {
+        try {
+            const raw = JSON.parse(localStorage.getItem(SORT_KEY));
+            if (raw && SORT_KEYS.includes(raw.key) && (raw.dir === 'asc' || raw.dir === 'desc'))
+                return { key: raw.key, dir: raw.dir };
+        }
+        catch (e) { }
+        return { ...SORT_DEFAULT };
+    }
+    let sortState = loadSortState();
     let notes = [];
     let trashedNotes = [];
     let otherNotes = [];
@@ -105,6 +120,10 @@ import {
         replaceAllBtn: $('#replaceAllBtn'),
         linkToolbarSection: $('#linkToolbarSection'),
         searchFilterBtn: $('#searchFilterBtn'),
+        searchSortBtn: $('#searchSortBtn'),
+        noteStats: $('#noteStats'),
+        noteStatsToggle: $('#noteStatsToggle'),
+        whatsNewBtn: $('#whatsNewBtn'),
         noteSaveStatus: $('#noteSaveStatus'),
         noteSaveRetry: $('#noteSaveRetry'),
         saveStatusToggle: $('#saveStatusToggle'),
@@ -678,8 +697,8 @@ import {
         }
         return '';
     }
-    const EYE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>';
-    const EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2"/><path d="M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+    const EYE_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M12 9a3.02 3.02 0 0 0-3 3c0 1.642 1.358 3 3 3 1.641 0 3-1.358 3-3 0-1.641-1.359-3-3-3z"/><path d="M12 5c-7.633 0-9.927 6.617-9.948 6.684L1.946 12l.105.316C2.073 12.383 4.367 19 12 19s9.927-6.617 9.948-6.684l.106-.316-.105-.316C21.927 11.617 19.633 5 12 5zm0 12c-5.351 0-7.424-3.846-7.926-5C4.578 10.842 6.652 7 12 7c5.351 0 7.424 3.846 7.926 5-.504 1.158-2.578 5-7.926 5z"/></svg>';
+    const EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M12 19c.946 0 1.81-.103 2.598-.281l-1.757-1.757c-.273.021-.55.038-.841.038-5.351 0-7.424-3.846-7.926-5a8.642 8.642 0 0 1 1.508-2.297L4.184 8.305c-1.538 1.667-2.121 3.346-2.132 3.379a.994.994 0 0 0 0 .633C2.073 12.383 4.367 19 12 19zm0-14c-1.837 0-3.346.396-4.604.981L3.707 2.293 2.293 3.707l18 18 1.414-1.414-3.319-3.319c2.614-1.951 3.547-4.615 3.561-4.657a.994.994 0 0 0 0-.633C21.927 11.617 19.633 5 12 5zm4.972 10.558-2.28-2.28c.19-.39.308-.819.308-1.278 0-1.641-1.359-3-3-3-.459 0-.888.118-1.277.309L8.915 7.501A9.26 9.26 0 0 1 12 7c5.351 0 7.424 3.846 7.926 5-.302.692-1.166 2.342-2.954 3.558z"/></svg>';
     function passwordFieldHtml(name, placeholder, autocomplete, group = name) {
         return `
             <div class="secret-inline-input">
@@ -1593,7 +1612,7 @@ import {
         list.appendChild(links);
         const visible = secretNotes
             .filter(matches)
-            .sort((a, b) => b.createdAt - a.createdAt);
+            .sort(noteComparator());
         if (!visible.length) {
             list.appendChild(query
                 ? emptyState({ icon: 'search.svg', title: t('Здесь мимо'), compact: true })
@@ -1911,7 +1930,7 @@ import {
         }
         clearNotesLoader();
         const query = el.searchInput.value.trim().toLowerCase();
-        const byDate = (a, b) => b.createdAt - a.createdAt;
+        const byDate = noteComparator();
         const filtered = notes.filter(n => {
             if (n.secret)
                 return false;
@@ -2299,6 +2318,8 @@ import {
             renderTags({ tags: [] });
             closeFind();
             applyGoogleSans();
+            hideCodeCopy();
+            updateNoteStats();
             lastRenderedNoteId = null;
             return;
         }
@@ -2312,6 +2333,8 @@ import {
         renderFormulas();
         updateFormatButtonsState();
         refreshFind(true);
+        hideCodeCopy();
+        updateNoteStats();
         if (note.id !== lastRenderedNoteId)
             animateNoteEnter();
         lastRenderedNoteId = note.id;
@@ -2646,6 +2669,8 @@ import {
         renderFormulas();
         updateFormatButtonsState();
         renderTrashBanner(note);
+        hideCodeCopy();
+        updateNoteStats();
         refreshFind(true);
         if (note.id !== lastRenderedNoteId)
             animateNoteEnter();
@@ -3365,7 +3390,6 @@ import {
         ['google', GOOGLE_ICON],
         ['github', GITHUB_ICON],
         ['discord', DISCORD_ICON],
-        // ['figma', FIGMA_ICON],
     ];
     function providerButtonsHtml(className) {
         return PROVIDERS.map(([provider, icon]) => `
@@ -3572,6 +3596,17 @@ import {
         });
         backBtn.focus();
     }
+    const MENU_ICONS = {
+        all: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a7.952 7.952 0 0 0 4.897-1.688l4.396 4.396 1.414-1.414-4.396-4.396A7.952 7.952 0 0 0 18 10c0-4.411-3.589-8-8-8s-8 3.589-8 8 3.589 8 8 8zm0-14c3.309 0 6 2.691 6 6s-2.691 6-6 6-6-2.691-6-6 2.691-6 6-6z"/></svg>',
+        title: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 8h2V6h3.252L7.68 18H5v2h8v-2h-2.252L13.32 6H17v2h2V4H5z"/></svg>',
+        content: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 19h16v2H4zm0-4h11v2H4zm0-4h16v2H4zm0-8h16v2H4zm0 4h11v2H4z"/></svg>',
+        tags: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.707 2.293A.997.997 0 0 0 11 2H6a.997.997 0 0 0-.707.293l-3 3A.996.996 0 0 0 2 6v5c0 .266.105.52.293.707l10 10a.997.997 0 0 0 1.414 0l8-8a.999.999 0 0 0 0-1.414l-10-10zM13 19.586l-9-9V6.414L6.414 4h4.172l9 9L13 19.586z"/></svg>',
+        created: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 15h3v3h2v-3h3v-2h-3v-3h-2v3H8z"/><path d="M19 4h-2V2h-2v2H9V2H7v2H5c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h14c1.103 0 2-.897 2-2V6c0-1.103-.897-2-2-2zm.002 16H5V8h14l.002 12z"/></svg>',
+        updated: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.045 7.401c.378-.378.586-.88.586-1.414s-.208-1.036-.586-1.414l-1.586-1.586c-.378-.378-.88-.586-1.414-.586s-1.036.208-1.413.585L4 13.585V18h4.413L19.045 7.401zm-3-3 1.587 1.585-1.59 1.584-1.586-1.585 1.589-1.584zM6 16v-1.585l7.04-7.018 1.586 1.586L7.587 16H6zm-2 4h16v2H4z"/></svg>',
+        alpha: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.707 14.707A1 1 0 0 0 19 13h-7v2h4.586l-4.293 4.293A1 1 0 0 0 13 21h7v-2h-4.586l4.293-4.293zM7 3.99H5v12H2l4 4 4-4H7zM17 3h-2c-.417 0-.79.259-.937.649l-2.75 7.333h2.137L14.193 9h3.613l.743 1.981h2.137l-2.75-7.333A1 1 0 0 0 17 3zm-2.057 4 .75-2h.613l.75 2h-2.113z"/></svg>',
+        down: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m18.707 12.707-1.414-1.414L13 15.586V6h-2v9.586l-4.293-4.293-1.414 1.414L12 19.414z"/></svg>',
+        up: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 8.414V18h2V8.414l4.293 4.293 1.414-1.414L12 4.586l-6.707 6.707 1.414 1.414z"/></svg>'
+    };
     let activeFilterDropdown = null;
     const SEARCH_FILTER_LABELS = {
         all: 'Везде',
@@ -3579,17 +3614,115 @@ import {
         content: 'Текст',
         tags: 'Теги',
     };
+    function menuOptionHtml({ value, attr, icon, label, active }) {
+        return `
+            <button
+                type="button"
+                role="radio"
+                aria-checked="${active}"
+                class="search-menu-option${active ? ' active' : ''}"
+                data-${attr}="${value}"
+                tabindex="${active ? '0' : '-1'}">
+                <span class="search-menu-icon" aria-hidden="true">${icon}</span>
+                <span class="search-menu-label">${escapeHtml(label)}</span>
+                <span class="search-menu-check" aria-hidden="true"></span>
+            </button>`;
+    }
+    function shiftNotesList(change) {
+        const list = document.querySelector('.notes-list');
+        if (!list)
+            return change();
+        const before = list.getBoundingClientRect().top;
+        change();
+        const delta = before - list.getBoundingClientRect().top;
+        if (!delta || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+            return;
+        list.style.transition = 'none';
+        list.style.transform = `translateY(${delta}px)`;
+        list.getBoundingClientRect();
+        list.style.transition = 'transform 0.24s var(--ease-out)';
+        list.style.transform = '';
+        clearTimeout(list.shiftTimer);
+        list.shiftTimer = setTimeout(() => {
+            list.style.transition = '';
+        }, 260);
+    }
+    function placeSearchMenu(menu, anchorBtn) {
+        const wrap = anchorBtn.closest('.search-wrap');
+        if (!wrap)
+            return false;
+        menu.innerHTML = `<div class="search-menu-inner">${menu.innerHTML}</div>`;
+        shiftNotesList(() => wrap.after(menu));
+        return true;
+    }
+    function hideSearchMenu(menu) {
+        menu.classList.remove('visible');
+        menu.classList.add('leaving');
+        window.setTimeout(() => shiftNotesList(() => menu.remove()), 130);
+    }
+    function moveMenuThumb(group, index) {
+        if (group)
+            group.style.setProperty('--i', String(Math.max(0, index)));
+    }
+    function setMenuGroupActive(buttons, activeButton) {
+        buttons.forEach(option => {
+            const on = option === activeButton;
+            option.classList.toggle('active', on);
+            option.setAttribute('aria-checked', String(on));
+            option.tabIndex = on ? 0 : -1;
+        });
+    }
+    function handleMenuArrowKeys(event, menu) {
+        const current = document.activeElement;
+        if (!menu.contains(current))
+            return;
+        const group = current.closest('[role="radiogroup"]');
+        if (!group)
+            return;
+        const options = Array.from(group.querySelectorAll('[role="radio"]'));
+        const index = options.indexOf(current);
+        if (index < 0)
+            return;
+        const vertical = group.classList.contains('search-menu-list');
+        const next = vertical ? ['ArrowDown', 'ArrowRight'] : ['ArrowRight', 'ArrowDown'];
+        const prev = vertical ? ['ArrowUp', 'ArrowLeft'] : ['ArrowLeft', 'ArrowUp'];
+        let nextIndex = index;
+        if (next.includes(event.key))
+            nextIndex = (index + 1) % options.length;
+        else if (prev.includes(event.key))
+            nextIndex = (index - 1 + options.length) % options.length;
+        else if (event.key === 'Home')
+            nextIndex = 0;
+        else if (event.key === 'End')
+            nextIndex = options.length - 1;
+        else if (event.key === 'Tab') {
+            const groups = Array.from(menu.querySelectorAll('[role="radiogroup"]'));
+            if (groups.length < 2)
+                return;
+            const targetGroup = groups[(groups.indexOf(group) + (event.shiftKey ? groups.length - 1 : 1)) % groups.length];
+            const target = targetGroup.querySelector('[role="radio"].active') || targetGroup.querySelector('[role="radio"]');
+            if (target) {
+                event.preventDefault();
+                target.focus();
+            }
+            return;
+        }
+        else
+            return;
+        event.preventDefault();
+        options[nextIndex].focus();
+    }
     function closeFilterDropdown() {
         if (!activeFilterDropdown)
             return;
         const dropdown = activeFilterDropdown;
         activeFilterDropdown = null;
-        dropdown.classList.remove('visible');
+        hideSearchMenu(dropdown);
+        el.searchFilterBtn.classList.remove('open');
         el.searchFilterBtn.setAttribute('aria-expanded', 'false');
         el.searchFilterBtn.removeAttribute('aria-controls');
         document.removeEventListener('pointerdown', handleFilterDropdownOutsideClick, true);
         document.removeEventListener('keydown', handleFilterDropdownKeydown);
-        window.setTimeout(() => dropdown.remove(), 240);
     }
     function handleFilterDropdownOutsideClick(event) {
         if (activeFilterDropdown &&
@@ -3607,72 +3740,49 @@ import {
             el.searchFilterBtn.focus();
             return;
         }
-        if (!activeFilterDropdown.contains(document.activeElement))
-            return;
-        const options = Array.from(activeFilterDropdown.querySelectorAll('.search-filter-option'));
-        if (!options.length)
-            return;
-        const currentIndex = options.indexOf(document.activeElement);
-        let nextIndex = currentIndex;
-        if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
-            nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % options.length;
-        else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
-            nextIndex = currentIndex < 0 ? options.length - 1 : (currentIndex - 1 + options.length) % options.length;
-        else if (event.key === 'Home')
-            nextIndex = 0;
-        else if (event.key === 'End')
-            nextIndex = options.length - 1;
-        else
-            return;
-        event.preventDefault();
-        options[nextIndex].focus();
+        handleMenuArrowKeys(event, activeFilterDropdown);
     }
     function showFilterDropdown() {
         if (activeFilterDropdown) {
             closeFilterDropdown();
             return;
         }
-        const sidebarTop = el.searchFilterBtn.closest('.sidebar-top');
-        if (!sidebarTop)
-            return;
-
+        closeSortDropdown();
         const filterKeys = Object.keys(SEARCH_FILTER_LABELS);
         const dropdown = document.createElement('div');
-        dropdown.className = 'search-filter-dropdown';
+        dropdown.className = 'search-menu';
         dropdown.id = 'searchFilterDropdown';
-        dropdown.setAttribute('role', 'radiogroup');
-        dropdown.setAttribute('aria-label', t('Где искать'));
         dropdown.innerHTML = `
-            <span class="search-filter-caption">${t('фильтр поиска')}</span>
-            <div class="search-filter-seg" style="--i:${Math.max(0, filterKeys.indexOf(searchFilter))}">
-                <span class="search-filter-thumb" aria-hidden="true"></span>
-                ${filterKeys.map(key => `
-                    <button
-                        type="button"
-                        role="radio"
-                        aria-checked="${key === searchFilter}"
-                        class="search-filter-option${key === searchFilter ? ' active' : ''}"
-                        data-filter="${key}"
-                        tabindex="${key === searchFilter ? '0' : '-1'}">${t(SEARCH_FILTER_LABELS[key])}</button>
-                `).join('')}
+            <div class="search-menu-head">
+                <span class="search-menu-caption">${escapeHtml(t('фильтр поиска'))}</span>
+            </div>
+            <div class="search-menu-list" role="radiogroup" style="--i:${Math.max(0, filterKeys.indexOf(searchFilter))}">
+                <span class="search-menu-thumb" aria-hidden="true"></span>
+                ${filterKeys.map(key => menuOptionHtml({
+                    value: key,
+                    attr: 'filter',
+                    icon: MENU_ICONS[key],
+                    label: t(SEARCH_FILTER_LABELS[key]),
+                    active: key === searchFilter
+                })).join('')}
             </div>
         `;
-        sidebarTop.appendChild(dropdown);
+        if (!placeSearchMenu(dropdown, el.searchFilterBtn))
+            return;
         activeFilterDropdown = dropdown;
+        el.searchFilterBtn.classList.add('open');
         el.searchFilterBtn.setAttribute('aria-expanded', 'true');
         el.searchFilterBtn.setAttribute('aria-controls', dropdown.id);
-
         requestAnimationFrame(() => {
             if (activeFilterDropdown === dropdown) {
                 dropdown.classList.add('visible');
-                const selected = dropdown.querySelector('.search-filter-option.active');
+                const selected = dropdown.querySelector('.search-menu-option.active');
                 if (selected)
                     selected.focus({ preventScroll: true });
             }
         });
-
-        const seg = dropdown.querySelector('.search-filter-seg');
-        const optionButtons = Array.from(dropdown.querySelectorAll('.search-filter-option'));
+        const list = dropdown.querySelector('.search-menu-list');
+        const optionButtons = Array.from(list.querySelectorAll('.search-menu-option'));
         optionButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const nextFilter = button.dataset.filter;
@@ -3683,23 +3793,214 @@ import {
                     localStorage.setItem(SEARCH_FILTER_KEY, searchFilter);
                 }
                 catch (e) { }
-                seg.style.setProperty('--i', String(filterKeys.indexOf(nextFilter)));
-                optionButtons.forEach(option => {
-                    const on = option === button;
-                    option.classList.toggle('active', on);
-                    option.setAttribute('aria-checked', String(on));
-                    option.tabIndex = on ? 0 : -1;
-                });
+                moveMenuThumb(list, filterKeys.indexOf(nextFilter));
+                setMenuGroupActive(optionButtons, button);
                 el.searchFilterBtn.classList.toggle('active', searchFilter !== 'all');
                 renderNotesList();
                 window.setTimeout(() => {
                     if (activeFilterDropdown === dropdown)
                         closeFilterDropdown();
-                }, 260);
+                }, 280);
             });
         });
         document.addEventListener('pointerdown', handleFilterDropdownOutsideClick, true);
         document.addEventListener('keydown', handleFilterDropdownKeydown);
+    }
+    const SORT_LABELS = {
+        created: 'Создано',
+        updated: 'Изменено',
+        title: 'Название',
+    };
+    const SORT_ICONS = {
+        created: MENU_ICONS.created,
+        updated: MENU_ICONS.updated,
+        title: MENU_ICONS.alpha,
+    };
+    function defaultSortDir(key) {
+        return key === 'title' ? 'asc' : 'desc';
+    }
+    function isDefaultSort() {
+        return sortState.key === SORT_DEFAULT.key && sortState.dir === SORT_DEFAULT.dir;
+    }
+    function noteComparator() {
+        const { key, dir } = sortState;
+        const sign = dir === 'asc' ? 1 : -1;
+        const collator = new Intl.Collator(locale, { numeric: true, sensitivity: 'base' });
+        const label = n => (n.title || '').trim() || t('Заметка');
+        return (x, y) => {
+            let diff;
+            if (key === 'title')
+                diff = collator.compare(label(x), label(y));
+            else if (key === 'updated')
+                diff = (x.updatedAt || 0) - (y.updatedAt || 0);
+            else
+                diff = (x.createdAt || 0) - (y.createdAt || 0);
+            return diff ? diff * sign : (y.createdAt || 0) - (x.createdAt || 0);
+        };
+    }
+    function sortDirLabelFor(key, dir) {
+        if (key === 'title')
+            return dir === 'asc' ? t('А–Я') : t('Я–А');
+        return dir === 'desc' ? t('сначала новые') : t('сначала старые');
+    }
+    function sortDirLabel() {
+        return sortDirLabelFor(sortState.key, sortState.dir);
+    }
+    function sortDirOrder(key) {
+        return key === 'title' ? ['asc', 'desc'] : ['desc', 'asc'];
+    }
+    function saveSortState() {
+        try {
+            localStorage.setItem(SORT_KEY, JSON.stringify(sortState));
+        }
+        catch (e) { }
+    }
+    function updateSortButtonState() {
+        if (!el.searchSortBtn)
+            return;
+        el.searchSortBtn.classList.toggle('active', !isDefaultSort());
+    }
+    let activeSortDropdown = null;
+    function closeSortDropdown() {
+        if (!activeSortDropdown)
+            return;
+        const dropdown = activeSortDropdown;
+        activeSortDropdown = null;
+        hideSearchMenu(dropdown);
+        el.searchSortBtn.classList.remove('open');
+        el.searchSortBtn.setAttribute('aria-expanded', 'false');
+        el.searchSortBtn.removeAttribute('aria-controls');
+        document.removeEventListener('pointerdown', handleSortDropdownOutsideClick, true);
+        document.removeEventListener('keydown', handleSortDropdownKeydown);
+    }
+    function handleSortDropdownOutsideClick(event) {
+        if (activeSortDropdown &&
+            !activeSortDropdown.contains(event.target) &&
+            !el.searchSortBtn.contains(event.target)) {
+            closeSortDropdown();
+        }
+    }
+    function handleSortDropdownKeydown(event) {
+        if (!activeSortDropdown)
+            return;
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeSortDropdown();
+            el.searchSortBtn.focus();
+            return;
+        }
+        handleMenuArrowKeys(event, activeSortDropdown);
+    }
+    function sortOrderButtonsHtml() {
+        return sortDirOrder(sortState.key).map(dir => `
+            <button
+                type="button"
+                role="radio"
+                aria-checked="${dir === sortState.dir}"
+                class="search-menu-seg-option${dir === sortState.dir ? ' active' : ''}"
+                data-dir="${dir}"
+                tabindex="${dir === sortState.dir ? '0' : '-1'}">
+                <span class="search-menu-seg-icon" aria-hidden="true">${dir === 'desc' ? MENU_ICONS.down : MENU_ICONS.up}</span>
+                <span>${escapeHtml(sortDirLabelFor(sortState.key, dir))}</span>
+            </button>`).join('');
+    }
+    function showSortDropdown() {
+        if (activeSortDropdown) {
+            closeSortDropdown();
+            return;
+        }
+        closeFilterDropdown();
+        const dropdown = document.createElement('div');
+        dropdown.className = 'search-menu search-sort-menu';
+        dropdown.id = 'searchSortDropdown';
+        dropdown.innerHTML = `
+            <div class="search-menu-head">
+                <span class="search-menu-caption">${escapeHtml(t('сортировка'))}</span>
+            </div>
+            <div class="search-menu-list" role="radiogroup" style="--i:${Math.max(0, SORT_KEYS.indexOf(sortState.key))}">
+                <span class="search-menu-thumb" aria-hidden="true"></span>
+                ${SORT_KEYS.map(key => menuOptionHtml({
+                    value: key,
+                    attr: 'sort',
+                    icon: SORT_ICONS[key],
+                    label: t(SORT_LABELS[key]),
+                    active: key === sortState.key
+                })).join('')}
+            </div>
+            <div class="search-menu-divider" aria-hidden="true"></div>
+            <div class="search-menu-head">
+                <span class="search-menu-caption">${escapeHtml(t('порядок'))}</span>
+            </div>
+            <div class="search-menu-seg" role="radiogroup" style="--i:${sortDirOrder(sortState.key).indexOf(sortState.dir)}">
+                <span class="search-menu-seg-thumb" aria-hidden="true"></span>
+                ${sortOrderButtonsHtml()}
+            </div>
+        `;
+        if (!placeSearchMenu(dropdown, el.searchSortBtn))
+            return;
+        activeSortDropdown = dropdown;
+        el.searchSortBtn.classList.add('open');
+        el.searchSortBtn.setAttribute('aria-expanded', 'true');
+        el.searchSortBtn.setAttribute('aria-controls', dropdown.id);
+        requestAnimationFrame(() => {
+            if (activeSortDropdown === dropdown) {
+                dropdown.classList.add('visible');
+                const selected = dropdown.querySelector('.search-menu-option.active');
+                if (selected)
+                    selected.focus({ preventScroll: true });
+            }
+        });
+        const list = dropdown.querySelector('.search-menu-list');
+        const seg = dropdown.querySelector('.search-menu-seg');
+        const optionButtons = Array.from(list.querySelectorAll('.search-menu-option'));
+        const applySort = () => {
+            saveSortState();
+            updateSortButtonState();
+            renderNotesList();
+        };
+        const bindOrderButtons = () => {
+            const dirButtons = Array.from(seg.querySelectorAll('.search-menu-seg-option'));
+            dirButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const dir = button.dataset.dir;
+                    if (dir !== 'asc' && dir !== 'desc' || dir === sortState.dir)
+                        return;
+                    sortState = { key: sortState.key, dir };
+                    moveMenuThumb(seg, sortDirOrder(sortState.key).indexOf(dir));
+                    setMenuGroupActive(dirButtons, button);
+                    applySort();
+                });
+            });
+        };
+        const refreshOrder = () => {
+            const focused = seg.contains(document.activeElement);
+            seg.querySelectorAll('.search-menu-seg-option').forEach(button => button.remove());
+            seg.insertAdjacentHTML('beforeend', sortOrderButtonsHtml());
+            seg.classList.add('no-anim');
+            moveMenuThumb(seg, sortDirOrder(sortState.key).indexOf(sortState.dir));
+            requestAnimationFrame(() => seg.classList.remove('no-anim'));
+            bindOrderButtons();
+            if (focused) {
+                const active = seg.querySelector('.search-menu-seg-option.active');
+                if (active)
+                    active.focus({ preventScroll: true });
+            }
+        };
+        optionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const nextKey = button.dataset.sort;
+                if (!SORT_KEYS.includes(nextKey) || nextKey === sortState.key)
+                    return;
+                sortState = { key: nextKey, dir: defaultSortDir(nextKey) };
+                moveMenuThumb(list, SORT_KEYS.indexOf(nextKey));
+                setMenuGroupActive(optionButtons, button);
+                refreshOrder();
+                applySort();
+            });
+        });
+        bindOrderButtons();
+        document.addEventListener('pointerdown', handleSortDropdownOutsideClick, true);
+        document.addEventListener('keydown', handleSortDropdownKeydown);
     }
     function unwrapLink(a) {
         const parent = a.parentNode;
@@ -4821,6 +5122,8 @@ import {
         syncNotification = null;
     }
     function openSettings() {
+        closeFilterDropdown();
+        closeSortDropdown();
         el.settingsPanel.classList.add('open');
         el.body.classList.add('settings-open');
     }
@@ -4997,6 +5300,10 @@ import {
             await importWelcomeDraft();
             revealApp();
             checkLegalUpdates(user);
+            setTimeout(() => {
+                if (currentUser === user)
+                    showWhatsNew();
+            }, 900);
         }
         else {
             notes = [];
@@ -5013,6 +5320,8 @@ import {
             el.welcomeScreen.classList.add('visible');
             startWelcomeIntro();
             document.documentElement.classList.remove('auth-pending');
+            if (!readWhatsNewSeen())
+                writeWhatsNewSeen(APP_VERSION);
         }
         renderNotesList();
         renderTrash();
@@ -5457,7 +5766,7 @@ import {
         items.forEach(node => observer.observe(node));
     }
     const DRAFT_KEY = 'startNotes.welcomeDraft';
-    const DEMO_LIMIT = 200;
+    const DEMO_LIMIT = 25;
     const DRAFT_TAGS = new Set(['P', 'DIV', 'BR', 'B', 'STRONG', 'I', 'EM', 'S', 'STRIKE', 'U', 'UL', 'OL', 'LI', 'SPAN']);
     function sanitizeDraft(html) {
         const doc = new DOMParser().parseFromString(`<body>${html || ''}</body>`, 'text/html');
@@ -6043,6 +6352,11 @@ import {
         renderAutoLockPresets();
         document.querySelectorAll('[data-app-build]').forEach(n => { n.textContent = appBuildDate(); });
         updateSpaceSetting();
+        closeSortDropdown();
+        closeFilterDropdown();
+        updateSortButtonState();
+        updateNoteStats();
+        hideCodeCopy();
         const title = el.loginBtn.querySelector('strong');
         if (!currentUser)
             title.textContent = t('Войти');
@@ -6067,10 +6381,390 @@ import {
             runPreviewAnimation(300);
         }
     }
+    let noteStatsEnabled = true;
+    let noteStatsTimer = null;
+    let noteStatsSelecting = false;
+    const WORD_RE = /[\p{L}\p{N}]+(?:['’\-‑][\p{L}\p{N}]+)*/gu;
+    function loadNoteStatsSetting() {
+        try {
+            noteStatsEnabled = localStorage.getItem(NOTE_STATS_KEY) !== 'false';
+        }
+        catch (e) {
+            noteStatsEnabled = true;
+        }
+        updateNoteStatsToggle();
+        updateNoteStats();
+    }
+    function updateNoteStatsToggle() {
+        if (!el.noteStatsToggle)
+            return;
+        el.noteStatsToggle.classList.toggle('active', noteStatsEnabled);
+        el.noteStatsToggle.setAttribute('aria-pressed', String(noteStatsEnabled));
+    }
+    function setNoteStatsEnabled(enabled) {
+        noteStatsEnabled = enabled;
+        try {
+            localStorage.setItem(NOTE_STATS_KEY, String(enabled));
+        }
+        catch (e) { }
+        updateNoteStatsToggle();
+        updateNoteStats();
+    }
+    function editorPlainText(root, skipSelector = '') {
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                if (node.nodeType === 1) {
+                    if (node.classList.contains('note-formula') || (skipSelector && node.matches(skipSelector)))
+                        return NodeFilter.FILTER_REJECT;
+                    return node.tagName === 'BR' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+        const blockSelector = 'p,div,li,h1,h2,h3,h4,h5,h6,blockquote,pre,td,th,tr';
+        let out = '';
+        let prevBlock = null;
+        while (walker.nextNode()) {
+            const node = walker.currentNode;
+            if (node.nodeType === 1) {
+                out += ' ';
+                continue;
+            }
+            const block = node.parentElement ? node.parentElement.closest(blockSelector) : null;
+            if (prevBlock && block !== prevBlock)
+                out += ' ';
+            out += node.nodeValue;
+            prevBlock = block;
+        }
+        return out;
+    }
+    function countWords(text) {
+        const found = String(text || '').match(WORD_RE);
+        return found ? found.length : 0;
+    }
+    function pluralWords(n) {
+        if (lang !== 'ru')
+            return n === 1 ? 'word' : 'words';
+        if (n % 10 === 1 && n % 100 !== 11)
+            return 'слово';
+        if ([2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100))
+            return 'слова';
+        return 'слов';
+    }
+    const READING_ALOUD_CPM_RU = 986;
+    const READING_ALOUD_CPM_MEAN = 863;
+    const READING_SILENT_FACTOR = 238 / 183;
+    const READING_CPM_CYRILLIC = READING_ALOUD_CPM_RU * READING_SILENT_FACTOR;
+    const READING_CPM_OTHER = READING_ALOUD_CPM_MEAN * READING_SILENT_FACTOR;
+    const READING_CODE_SLOWDOWN = 1.5;
+    const READING_FORMULA_SECONDS = 4;
+    const CYRILLIC_RE = /\p{Script=Cyrillic}/u;
+    const READ_CHAR_RE = /[\p{L}\p{N}]/gu;
+    function readingSecondsFor(text, slowdown = 1) {
+        let cyrillic = 0;
+        let other = 0;
+        const words = String(text || '').match(WORD_RE);
+        if (!words)
+            return 0;
+        for (const word of words) {
+            const letters = (word.match(READ_CHAR_RE) || []).length;
+            if (CYRILLIC_RE.test(word))
+                cyrillic += letters;
+            else
+                other += letters;
+        }
+        const minutes = cyrillic / READING_CPM_CYRILLIC + other / READING_CPM_OTHER;
+        return minutes * 60 * slowdown;
+    }
+    function editorReadingSeconds(root) {
+        let seconds = 0;
+        const codeText = Array.from(root.querySelectorAll('pre')).map(pre => pre.textContent || '').join(' ');
+        const plain = editorPlainText(root, 'pre');
+        seconds += readingSecondsFor(plain);
+        seconds += readingSecondsFor(codeText, READING_CODE_SLOWDOWN);
+        seconds += root.querySelectorAll('.note-formula').length * READING_FORMULA_SECONDS;
+        return seconds;
+    }
+    function roundReadingSeconds(seconds) {
+        if (seconds < 60)
+            return Math.max(5, Math.ceil(seconds / 5) * 5);
+        if (seconds < 600)
+            return Math.round(seconds / 10) * 10;
+        return Math.round(seconds / 60) * 60;
+    }
+    function formatReadingDuration(totalSeconds) {
+        const rounded = roundReadingSeconds(totalSeconds);
+        if (rounded < 60)
+            return t('{s} сек', { s: rounded });
+        const minutes = Math.floor(rounded / 60);
+        const seconds = rounded % 60;
+        if (minutes < 10 && seconds)
+            return t('{m} мин {s} сек', { m: minutes, s: seconds });
+        return formatDuration(minutes);
+    }
+    function readingTimeLabel(seconds) {
+        return t('{d} чтения', { d: formatReadingDuration(seconds) });
+    }
+    function updateNoteStats() {
+        if (!el.noteStats)
+            return;
+        if (!noteStatsEnabled || el.noteTitle.disabled || !getNote(activeNoteId)) {
+            el.noteStats.hidden = true;
+            noteStatsSelecting = false;
+            return;
+        }
+        const total = countWords(editorPlainText(el.noteContent));
+        const sel = window.getSelection();
+        let selected = 0;
+        if (sel && sel.rangeCount && !sel.isCollapsed &&
+            el.noteContent.contains(sel.anchorNode) && el.noteContent.contains(sel.focusNode)) {
+            selected = countWords(sel.toString());
+        }
+        noteStatsSelecting = selected > 0;
+        if (selected) {
+            el.noteStats.textContent = t('Выделено {n} из {total} {unit}', { n: selected, total, unit: pluralWords(total) });
+        }
+        else if (!total) {
+            el.noteStats.textContent = `0 ${pluralWords(0)}`;
+        }
+        else {
+            el.noteStats.textContent = `${total} ${pluralWords(total)} · ${readingTimeLabel(editorReadingSeconds(el.noteContent))}`;
+        }
+        el.noteStats.hidden = false;
+    }
+    function scheduleNoteStats(delay = 250) {
+        if (!noteStatsEnabled)
+            return;
+        clearTimeout(noteStatsTimer);
+        noteStatsTimer = setTimeout(updateNoteStats, delay);
+    }
+    function handleStatsSelectionChange() {
+        if (!noteStatsEnabled)
+            return;
+        const sel = window.getSelection();
+        const inside = !!(sel && sel.rangeCount && el.noteContent.contains(sel.anchorNode));
+        if (inside || noteStatsSelecting)
+            scheduleNoteStats(120);
+    }
+    const codeCopy = { btn: null, hoverPre: null, caretPre: null, hideTimer: null, resetTimer: null };
+    function codeBlockText(pre) {
+        const clone = pre.cloneNode(true);
+        clone.querySelectorAll('br').forEach(br => br.replaceWith('\n'));
+        return (clone.textContent || '')
+            .replace(/\u00a0/g, ' ')
+            .replace(/\u200b/g, '')
+            .replace(/\n$/, '');
+    }
+    async function copyPlainText(text) {
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+        }
+        catch (e) { }
+        const sel = window.getSelection();
+        const saved = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+        const wasFocused = document.activeElement === el.noteContent;
+        let ok = false;
+        const area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+        document.body.appendChild(area);
+        try {
+            area.select();
+            ok = document.execCommand('copy');
+        }
+        catch (e) {
+            ok = false;
+        }
+        area.remove();
+        if (saved && sel) {
+            if (wasFocused)
+                el.noteContent.focus({ preventScroll: true });
+            sel.removeAllRanges();
+            sel.addRange(saved);
+        }
+        return ok;
+    }
+    function ensureCodeCopyButton() {
+        if (codeCopy.btn)
+            return codeCopy.btn;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'code-copy-btn';
+        btn.innerHTML = '<span class="code-copy-icon"></span>';
+        btn.addEventListener('mousedown', e => e.preventDefault());
+        btn.addEventListener('mouseenter', () => clearTimeout(codeCopy.hideTimer));
+        btn.addEventListener('mouseleave', () => {
+            codeCopy.hoverPre = null;
+            scheduleHideCodeCopy(200);
+        });
+        btn.addEventListener('click', async () => {
+            const pre = codeCopy.hoverPre || codeCopy.caretPre || codeCopy.pre;
+            if (!pre || !pre.isConnected)
+                return;
+            const ok = await copyPlainText(codeBlockText(pre));
+            clearTimeout(codeCopy.resetTimer);
+            btn.classList.toggle('copied', ok);
+            btn.classList.toggle('failed', !ok);
+            codeCopy.resetTimer = setTimeout(() => {
+                btn.classList.remove('copied', 'failed');
+                placeCodeCopy();
+            }, 1500);
+            placeCodeCopy();
+        });
+        document.body.appendChild(btn);
+        codeCopy.btn = btn;
+        return btn;
+    }
+    function showCodeCopy(pre) {
+        clearTimeout(codeCopy.hideTimer);
+        codeCopy.pre = pre;
+        const btn = ensureCodeCopyButton();
+        placeCodeCopy();
+    }
+    function placeCodeCopy() {
+        const btn = codeCopy.btn;
+        const pre = codeCopy.pre;
+        if (!btn)
+            return;
+        if (!pre || !pre.isConnected || !el.noteContent.contains(pre)) {
+            btn.classList.remove('visible');
+            return;
+        }
+        const box = pre.getBoundingClientRect();
+        const view = el.noteContent.getBoundingClientRect();
+        const top = Math.max(box.top, view.top) + 6;
+        if (box.bottom < view.top + 12 || box.top > view.bottom - 12 || top > box.bottom - 30) {
+            btn.classList.remove('visible');
+            return;
+        }
+        btn.style.top = `${Math.round(top)}px`;
+        btn.style.left = `${Math.round(Math.min(box.right, view.right) - btn.offsetWidth - 8)}px`;
+        btn.classList.add('visible');
+    }
+    function hideCodeCopy() {
+        clearTimeout(codeCopy.hideTimer);
+        codeCopy.pre = null;
+        codeCopy.hoverPre = null;
+        codeCopy.caretPre = null;
+        if (codeCopy.btn)
+            codeCopy.btn.classList.remove('visible');
+    }
+    function scheduleHideCodeCopy(delay) {
+        clearTimeout(codeCopy.hideTimer);
+        codeCopy.hideTimer = setTimeout(() => {
+            const target = codeCopy.hoverPre || codeCopy.caretPre;
+            if (target) {
+                codeCopy.pre = target;
+                placeCodeCopy();
+                return;
+            }
+            codeCopy.pre = null;
+            if (codeCopy.btn)
+                codeCopy.btn.classList.remove('visible');
+        }, delay);
+    }
+    function setupCodeCopy() {
+        el.noteContent.addEventListener('mouseover', e => {
+            const pre = e.target.closest ? e.target.closest('pre') : null;
+            if (pre && el.noteContent.contains(pre)) {
+                codeCopy.hoverPre = pre;
+                showCodeCopy(pre);
+            }
+        });
+        el.noteContent.addEventListener('mouseleave', () => {
+            codeCopy.hoverPre = null;
+            scheduleHideCodeCopy(250);
+        });
+        document.addEventListener('selectionchange', () => {
+            const sel = window.getSelection();
+            const inside = !!(sel && sel.rangeCount && el.noteContent.contains(sel.anchorNode));
+            const pre = inside ? getAncestorTag(sel.anchorNode, 'PRE') : null;
+            codeCopy.caretPre = pre;
+            if (pre)
+                showCodeCopy(pre);
+            else if (codeCopy.pre && !codeCopy.hoverPre)
+                scheduleHideCodeCopy(200);
+        });
+        el.noteContent.addEventListener('scroll', placeCodeCopy, { passive: true });
+        el.noteContent.addEventListener('input', placeCodeCopy);
+        window.addEventListener('resize', placeCodeCopy);
+    }
+    const CHANGELOG = [
+        {
+            version: '5.11.0',
+            items: [
+                { title: 'Слова и время чтения', text: 'Счётчик под заметкой. Выключается в настройках.' },
+                { title: 'Сортировка списка', text: 'Кнопка рядом с поиском: по созданию, изменению или названию.' },
+                { title: 'Копирование кода', text: 'У блока кода появилась кнопка копирования.' },
+            ]
+        }
+    ];
+    function compareVersions(x, y) {
+        const px = String(x).split('.').map(n => parseInt(n, 10) || 0);
+        const py = String(y).split('.').map(n => parseInt(n, 10) || 0);
+        for (let i = 0; i < Math.max(px.length, py.length); i++) {
+            const diff = (px[i] || 0) - (py[i] || 0);
+            if (diff)
+                return diff;
+        }
+        return 0;
+    }
+    function readWhatsNewSeen() {
+        try {
+            return localStorage.getItem(WHATS_NEW_KEY) || '';
+        }
+        catch (e) {
+            return '';
+        }
+    }
+    function writeWhatsNewSeen(version) {
+        try {
+            localStorage.setItem(WHATS_NEW_KEY, version);
+        }
+        catch (e) { }
+    }
+    let whatsNewNotification = null;
+    function showWhatsNew(force = false) {
+        if (whatsNewNotification)
+            return;
+        const seen = force ? '' : readWhatsNewSeen();
+        const releases = CHANGELOG
+            .filter(r => compareVersions(r.version, APP_VERSION) <= 0 && (force || compareVersions(r.version, seen) > 0))
+            .sort((x, y) => compareVersions(y.version, x.version))
+            .slice(0, force ? 1 : 3);
+        if (!force)
+            writeWhatsNewSeen(APP_VERSION);
+        if (!releases.length)
+            return;
+        const several = releases.length > 1;
+        const body = releases.map(release => `
+            ${several ? `<div class="whats-new-release">${escapeHtml(release.version)}</div>` : ''}
+            <ul class="whats-new-list">
+                ${release.items.map(item => `<li><strong>${escapeHtml(t(item.title))}</strong>${escapeHtml(t(item.text))}</li>`).join('')}
+            </ul>
+        `).join('');
+        const { el: n, hide } = showNotification(`
+            <div class="notification-title">${t('Что нового')}${several ? '' : `<span class="whats-new-version">${escapeHtml(releases[0].version)}</span>`}</div>
+            ${body}
+            <div class="notification-actions">
+                <button class="notification-confirm" type="button">${t('Понятно')}</button>
+            </div>
+        `);
+        whatsNewNotification = { el: n, hide };
+        n.querySelector('.notification-confirm').addEventListener('click', () => {
+            hide();
+            whatsNewNotification = null;
+        });
+    }
     function init() {
         loadTheme();
         loadFontSize();
         loadSaveStatusVisibility();
+        loadNoteStatsSetting();
         window.matchMedia("(prefers-color-scheme: dark)")
             .addEventListener("change", () => {
             if (themeSetting() === "system") {
@@ -6090,6 +6784,8 @@ import {
         el.searchInput.addEventListener('input', () => renderNotesList());
         el.searchFilterBtn.classList.toggle('active', searchFilter !== 'all');
         el.searchFilterBtn.addEventListener('click', showFilterDropdown);
+        updateSortButtonState();
+        el.searchSortBtn.addEventListener('click', showSortDropdown);
         el.trashHeader.addEventListener('click', e => {
             if (e.target.closest('button'))
                 return;
@@ -6113,6 +6809,9 @@ import {
         el.noteContent.addEventListener('input', normalizeUnderlines);
         el.noteContent.addEventListener('input', debouncedAutosave);
         el.noteContent.addEventListener('input', scheduleFindRefresh);
+        el.noteContent.addEventListener('input', () => scheduleNoteStats());
+        document.addEventListener('selectionchange', handleStatsSelectionChange);
+        setupCodeCopy();
         document.querySelector('.toolbar').addEventListener('mousedown', e => {
             if (e.target.closest('button'))
                 e.preventDefault();
@@ -6193,6 +6892,11 @@ import {
         document.addEventListener('keydown', bumpAutoLock, true);
         el.addTagBtn.addEventListener('click', addTag);
         el.saveStatusToggle.addEventListener('click', toggleSaveStatusVisibility);
+        el.noteStatsToggle.addEventListener('click', () => setNoteStatsEnabled(!noteStatsEnabled));
+        el.whatsNewBtn.addEventListener('click', () => {
+            closeSettings();
+            showWhatsNew(true);
+        });
         el.noteSaveRetry.addEventListener('click', () => {
             persistActiveNote(true);
         });

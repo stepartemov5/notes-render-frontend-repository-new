@@ -8,6 +8,9 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#f7f8fa">
     <link rel="icon" href="/иконка заметки.svg" type="image/svg+xml">
+    <script defer src="https://codeqanalytics.onrender.com/tracker/a.js"
+    data-site="d1b5ca24-128d-4778-b5cf-6532bc7e6aee"
+    data-api="https://zlxugwlfmzlrvsqovnyd.supabase.co/functions/v1/collect"></script>
     <script>
         (() => {
             try {
@@ -427,6 +430,13 @@
             </p>
 
             <p>
+                Для сбора и анализа статистики посещений Сервиса
+                используется <a href="https://codeqanalytics.onrender.com/" target="_blank" rel="noopener noreferrer">codeq analytics</a>,
+                сервис веб-аналитики codeq. Он обрабатывает технические
+                данные о посещениях и взаимодействии с сайтом.
+            </p>
+
+            <p>
                 Эти сервисы могут обрабатывать технические
                 и учётные данные в соответствии
                 с собственными правилами и политиками.
@@ -652,6 +662,13 @@
             <p>codeq notes uses Supabase, Google, GitHub, and Discord services.</p>
 
             <p>
+                The Service uses <a href="https://codeqanalytics.onrender.com/" target="_blank" rel="noopener noreferrer">codeq analytics</a>,
+                a web analytics service by codeq, to collect and analyze
+                website usage statistics. It processes technical data
+                about visits and interactions with the website.
+            </p>
+
+            <p>
                 These services may process technical
                 and account information in accordance
                 with their own policies and practices.
@@ -701,50 +718,38 @@
 
     <script>
         (() => {
-            const LANG_KEY = 'startNotes.privacyLanguage';
-            const THEME_KEY = 'startNotes.theme';
-            const TITLES = { ru: 'codeq notes ― Политика конфиденциальности', en: 'codeq notes ― Privacy Policy' };
             const buttons = document.querySelectorAll('.lang-btn');
             const sections = document.querySelectorAll('.lang-section');
 
             function switchLang(lang) {
-                sections.forEach(s => s.classList.toggle('active', s.id === `lang-${lang}`));
-                buttons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+                sections.forEach(section => {
+                    section.classList.toggle('active', section.id === `lang-${lang}`);
+                });
+
+                buttons.forEach(button => {
+                    button.classList.toggle('active', button.dataset.lang === lang);
+                });
+
                 document.documentElement.lang = lang;
-                document.title = TITLES[lang];
+
                 try {
-                    localStorage.setItem(LANG_KEY, lang);
+                    localStorage.setItem('startNotes.privacyLanguage', lang);
                 } catch {}
             }
 
-            buttons.forEach(b => b.addEventListener('click', () => switchLang(b.dataset.lang)));
-
-            let saved = null;
-            try {
-                saved = localStorage.getItem(LANG_KEY);
-            } catch {}
-            if (saved !== 'ru' && saved !== 'en') {
-                saved = navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
-            }
-            switchLang(saved);
-
-            function applyTheme() {
-                let saved = 'system';
-                try {
-                    saved = localStorage.getItem(THEME_KEY) || 'system';
-                } catch {}
-                const theme = saved === 'system'
-                    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-                    : saved;
-                document.documentElement.setAttribute('data-theme', theme);
-                document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#13151a' : '#f7f8fa';
-            }
-
-            applyTheme();
-            matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
-            window.addEventListener('storage', e => {
-                if (e.key === THEME_KEY) applyTheme();
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    switchLang(button.dataset.lang);
+                });
             });
+
+            let savedLang = 'ru';
+
+            try {
+                savedLang = localStorage.getItem('startNotes.privacyLanguage') || 'ru';
+            } catch {}
+
+            switchLang(savedLang === 'en' ? 'en' : 'ru');
         })();
     </script>
 </body>

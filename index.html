@@ -161,7 +161,7 @@
                     <div class="note-content welcome-demo-body" contenteditable="true" data-placeholder="Список покупок, идея на миллион или план на выходные…"></div>
                     <div class="welcome-demo-foot">
                         <span class="welcome-demo-status">Черновик сохранён в браузере</span>
-                        <span class="welcome-demo-status welcome-demo-limit" hidden>Хотите продолжить писать заметку? Войдите, чтобы увидеть все функции заметок.</span>
+                        <span class="welcome-demo-status welcome-demo-limit" hidden>Хотите продолжить писать заметку? Войдите, чтобы дописать мысль и увидеть все функции заметок.</span>
                         <button type="button" class="welcome-demo-clear">Стереть</button>
                     </div>
                 </div>
@@ -261,6 +261,17 @@
                         </div>
                     </div>
                     <div class="settings-group">
+                        <div class="settings-title">Счётчик слов</div>
+                        <div class="save-status-setting">
+                            <div class="save-status-setting-info">
+                                <strong>Слова и время чтения под заметкой</strong>
+                            </div>
+                            <button type="button" class="settings-toggle active" id="noteStatsToggle" aria-pressed="true">
+                                <span></span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-group">
                         <div class="settings-title">Секретные заметки</div>
                         <div class="save-status-setting">
                             <div class="save-status-setting-info">
@@ -303,6 +314,7 @@
                         </div>
                     </div>
                     <div class="settings-group settings-links">
+                        <button type="button" class="settings-link" id="whatsNewBtn">Что нового</button>
                         <a href="/privacy" target="_blank" rel="noopener noreferrer" class="settings-link">Политика конфиденциальности</a>
                         <a href="/terms" target="_blank" rel="noopener noreferrer" class="settings-link">Условия использования</a>
                         <p class="settings-version">codeq notes <span data-app-version></span> · сборка от <span data-app-build></span></p>
@@ -316,6 +328,9 @@
                 <div class="search-wrap">
                     <img src="search.svg" class="search-icon">
                     <input type="text" id="searchInput" placeholder="Найти заметку">
+                    <button class="search-filter-btn search-sort-btn" id="searchSortBtn" type="button" aria-haspopup="true" aria-expanded="false">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M7 20h2V8h3L8 4 4 8h3zm13-4h-3V4h-2v12h-3l4 4z"/></svg>
+                    </button>
                     <button class="search-filter-btn" id="searchFilterBtn" aria-haspopup="true" aria-expanded="false">
                         <img src="filter.svg">
                     </button>
@@ -479,6 +494,7 @@
                     </button>
                 </div>
             </div>
+            <div class="note-stats" id="noteStats" aria-live="polite" hidden></div>
             <div class="note-save-status" id="noteSaveStatus" data-status="saved">
                 <span class="note-save-dot"></span>
                 <span class="note-save-text">Сохранено</span>
