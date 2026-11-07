@@ -549,7 +549,8 @@ import {
         const isSecret = !!(note && note.secret);
         el.secretBadge.hidden = !isSecret;
         el.pinNoteBtn.hidden = !note || isSecret || inTrash;
-        el.secretNoteBtn.hidden = !note || isSecret || inTrash;
+        el.secretNoteBtn.hidden = !note || inTrash;
+        el.secretNoteBtn.classList.toggle('active', isSecret);
         el.deleteNoteBtn.hidden = !note || inTrash;
         el.findHeaderBtn.hidden = !note;
     }
@@ -2357,6 +2358,74 @@ import {
             await makeActiveNoteSecret();
         });
     }
+    function toggleActiveNoteSecret() {
+        const note = getNote(activeNoteId);
+        if (!note)
+            return;
+        if (note.secret)
+            showMakePublicConfirmNotification();
+        else
+            showMakeSecretConfirmNotification();
+    }
+    function showMakePublicConfirmNotification() {
+        const note = getNote(activeNoteId);
+        if (!note || !note.secret)
+            return;
+        const { el: n, hide } = showNotification(`
+            <div class="notification-title">${t('Рассекретить заметку?')}</div>
+            <div class="notification-text">${t('Заметка вернётся в общий список и будет храниться без шифрования.')}</div>
+            <div class="notification-actions">
+                <button class="notification-cancel" type="button">${t('Отмена')}</button>
+                <button class="notification-confirm" type="button">${t('Рассекретить')}</button>
+            </div>
+        `);
+        n.querySelector('.notification-cancel').addEventListener('click', hide);
+        n.querySelector('.notification-confirm').addEventListener('click', async () => {
+            hide();
+            await makeActiveNotePublic();
+        });
+    }
+    async function makeActiveNotePublic() {
+        let note = getNote(activeNoteId);
+        if (!note || !note.secret || !currentUser)
+            return;
+        if (!vaultKey || note.locked) {
+            const unlocked = await requestUnlock();
+            if (!unlocked)
+                return;
+            note = getNote(activeNoteId);
+            if (!note || !note.secret || note.locked)
+                return;
+        }
+        const saved = await persistActiveNote(true);
+        if (!saved) {
+            showToast(t('Заметка не сохранена'), t('Рассекретить можно только сохранённую заметку.'));
+            return;
+        }
+        const previousEnc = note.enc;
+        note.secret = false;
+        delete note.locked;
+        delete note.enc;
+        try {
+            await saveNote(note);
+            expandSection('all');
+            renderNotesList();
+            renderEditor();
+            renderSecretSection();
+            showToast(t('Заметка рассекречена'));
+        }
+        catch (error) {
+            note.secret = true;
+            note.locked = false;
+            if (previousEnc)
+                note.enc = previousEnc;
+            renderNotesList();
+            renderEditor();
+            renderSecretSection();
+            handleFirebaseError(error);
+            showToast(t('Заметка осталась секретной'), t('Изменение не сохранилось на сервере.'));
+        }
+    }
     async function makeActiveNoteSecret() {
         let note = getNote(activeNoteId);
         if (!note || note.secret || !currentUser)
@@ -3625,7 +3694,6 @@ import {
                 tabindex="${active ? '0' : '-1'}">
                 <span class="search-menu-icon" aria-hidden="true">${icon}</span>
                 <span class="search-menu-label">${escapeHtml(label)}</span>
-                <span class="search-menu-check" aria-hidden="true"></span>
             </button>`;
     }
     function shiftNotesList(change) {
@@ -3661,8 +3729,12 @@ import {
         window.setTimeout(() => shiftNotesList(() => menu.remove()), 130);
     }
     function moveMenuThumb(group, index) {
-        if (group)
-            group.style.setProperty('--i', String(Math.max(0, index)));
+        if (!group)
+            return;
+        const i = Math.max(0, index);
+        group.style.setProperty('--i', String(i));
+        group.style.setProperty('--col', String(i % 2));
+        group.style.setProperty('--r', String(Math.floor(i / 2)));
     }
     function setMenuGroupActive(buttons, activeButton) {
         buttons.forEach(option => {
@@ -3686,8 +3758,11 @@ import {
         const vertical = group.classList.contains('search-menu-list');
         const next = vertical ? ['ArrowDown', 'ArrowRight'] : ['ArrowRight', 'ArrowDown'];
         const prev = vertical ? ['ArrowUp', 'ArrowLeft'] : ['ArrowLeft', 'ArrowUp'];
+        const grid = group.classList.contains('search-menu-grid');
         let nextIndex = index;
-        if (next.includes(event.key))
+        if (grid && (event.key === 'ArrowDown' || event.key === 'ArrowUp'))
+            nextIndex = (index + 2) % options.length;
+        else if (next.includes(event.key))
             nextIndex = (index + 1) % options.length;
         else if (prev.includes(event.key))
             nextIndex = (index - 1 + options.length) % options.length;
@@ -3756,7 +3831,7 @@ import {
             <div class="search-menu-head">
                 <span class="search-menu-caption">${escapeHtml(t('фильтр поиска'))}</span>
             </div>
-            <div class="search-menu-list" role="radiogroup" style="--i:${Math.max(0, filterKeys.indexOf(searchFilter))}">
+            <div class="search-menu-list search-menu-grid" role="radiogroup" style="--col:${Math.max(0, filterKeys.indexOf(searchFilter)) % 2};--r:${Math.floor(Math.max(0, filterKeys.indexOf(searchFilter)) / 2)}">
                 <span class="search-menu-thumb" aria-hidden="true"></span>
                 ${filterKeys.map(key => menuOptionHtml({
                     value: key,
@@ -6780,7 +6855,7 @@ import {
         renderSelectionBar();
         el.newNoteBtn.addEventListener('click', () => createNote());
         if (el.secretNoteBtn)
-            el.secretNoteBtn.addEventListener('click', showMakeSecretConfirmNotification);
+            el.secretNoteBtn.addEventListener('click', toggleActiveNoteSecret);
         el.searchInput.addEventListener('input', () => renderNotesList());
         el.searchFilterBtn.classList.toggle('active', searchFilter !== 'all');
         el.searchFilterBtn.addEventListener('click', showFilterDropdown);
