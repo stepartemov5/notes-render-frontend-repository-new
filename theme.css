@@ -3726,14 +3726,6 @@ body.lang-out .editor > * {
     pointer-events: auto;
 }
 
-.code-copy-btn:hover {
-    color: var(--text);
-}
-
-.code-copy-btn.copied {
-    color: var(--accent);
-}
-
 .code-copy-btn.failed {
     color: #e2504a;
 }
