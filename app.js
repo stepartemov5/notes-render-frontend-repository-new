@@ -18,7 +18,7 @@ import {
     'use strict';
     translateDom(document.body);
     const APP_VERSION = '5.11.0';
-    const APP_BUILD = new Date(2026, 9, 23);
+    const APP_BUILD = new Date(2026, 10, 7);
     function appBuildDate() {
         return APP_BUILD.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }).replace(' г.', '');
     }
@@ -6488,9 +6488,7 @@ import {
         badge.hidden = !icon || !providerIconEnabled;
         if (icon) {
             badge.dataset.provider = provider;
-            const img = badge.querySelector('img');
-            if (img.getAttribute('src') !== icon)
-                img.src = icon;
+            badge.style.setProperty('--provider-icon', `url('${icon}')`);
         }
     }
     function setProviderIconEnabled(enabled) {

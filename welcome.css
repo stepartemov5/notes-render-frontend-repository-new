@@ -1367,7 +1367,7 @@
 }
 
 .welcome-demo-card:focus-within {
-    border-color: color-mix(in srgb, var(--accent) 45%, var(--border, #e5e8ec));
+    border-color: var(--accent);
 }
 
 .welcome-demo-toolbar {

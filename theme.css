@@ -576,7 +576,7 @@ body.editor-fullscreen .sidebar {
     align-items: center;
     justify-content: space-between;
     padding: 20px 16px;
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid var(--border);
     background: var(--panel);
     transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background-color 0.2s var(--ease);
 }
@@ -3703,14 +3703,6 @@ body.lang-out .editor > * {
     pointer-events: auto;
 }
 
-.code-copy-btn:hover {
-    color: var(--text);
-}
-
-.code-copy-btn.copied {
-    color: var(--accent);
-}
-
 .code-copy-btn.failed {
     color: #e2504a;
 }
@@ -3816,25 +3808,18 @@ body.lang-out .editor > * {
 }
 
 .login-provider {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
+    display: block;
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
     margin-left: auto;
+    background-color: var(--text);
+    -webkit-mask: var(--provider-icon) center / contain no-repeat;
+    mask: var(--provider-icon) center / contain no-repeat;
 }
 
 .login-provider[hidden] {
     display: none;
-}
-
-.login-provider img {
-    display: block;
-    width: 16px;
-    height: 16px;
-}
-
-:root[data-theme="dark"] .login-provider[data-provider="github"] img {
-    filter: invert(1);
 }
 
 /* ---------- Уведомления об ошибках и удалении навсегда ---------- */
