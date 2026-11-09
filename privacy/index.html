@@ -182,8 +182,8 @@
             border-radius: 6px;
             background-color: var(--btn-bg);
             color: var(--text-color);
-            font-family: 'PT Root UI', system-ui, sans-serif;
-            font-size: 14px;
+            font-family: 'Manrope', system-ui, sans-serif;
+            font-size: 13px;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
         }
@@ -234,7 +234,7 @@
         <div id="lang-ru" class="lang-section active">
             <h1>Политика конфиденциальности сервиса codeq notes</h1>
 
-            <p class="updated">Вступает в силу: 31 октября 2026 года</p>
+            <p class="updated">Вступает в силу: 7 ноября 2026 года</p>
 
             <p>
                 Настоящая Политика конфиденциальности описывает,
@@ -271,7 +271,7 @@
                 <li>адрес электронной почты, связанный с учётной записью Google, GitHub или Discord;</li>
                 <li>имя и фотография профиля;</li>
                 <li>технические данные, необходимые для работы авторизации и синхронизации;</li>
-                <li>способ входа, через который создана заметка, и настройка разделения заметок по способу входа;</li>
+                <li>способ входа, через который создана заметка, настройка разделения заметок по способу входа и срок хранения заметок в корзине;</li>
                 <li>
                     содержимое созданных пользователем заметок,
                     включая названия, текст, теги
@@ -384,11 +384,13 @@
             </p>
 
             <p>
-                Настройки интерфейса (тема, размер текста, фильтр поиска,
-                автоблокировка и состояние разделов) хранятся
+                Настройки интерфейса (тема, язык, размер текста, фильтр
+                и сортировка поиска, автоблокировка, отображение элементов
+                интерфейса и состояние разделов) хранятся
                 только в браузере пользователя и на сервер не отправляются.
-                Исключение — настройка разделения заметок по способу входа:
-                она сохраняется в учётной записи, чтобы действовать на всех устройствах.
+                Исключение — настройка разделения заметок по способу входа
+                и срок хранения заметок в корзине: они сохраняются
+                в учётной записи, чтобы действовать на всех устройствах.
                 Сервис не использует cookies для рекламы или аналитики.
             </p>
 
@@ -397,13 +399,26 @@
             <p>При удалении заметки она перемещается в корзину.</p>
 
             <p>
-                В течение 15 дней пользователь может
+                Срок хранения заметок в корзине пользователь
+                выбирает в настройках: 7, 15 или 30 дней.
+                По умолчанию — 15 дней.
+            </p>
+
+            <p>
+                В течение этого срока пользователь может
                 восстановить заметку или удалить её навсегда.
             </p>
 
             <p>
-                По истечении 15 дней заметка удаляется
-                при следующем входе пользователя в Сервис.
+                Если пользователь сокращает срок, а в корзине есть заметки,
+                которые лежат там дольше нового срока, Сервис предлагает
+                на выбор: удалить их сразу или начать для них
+                отсчёт нового срока заново.
+            </p>
+
+            <p>
+                По истечении срока заметка удаляется
+                при следующем открытии Сервиса пользователем.
             </p>
 
             <p>
@@ -491,7 +506,7 @@
         <div id="lang-en" class="lang-section">
             <h1>Privacy Policy for codeq notes</h1>
 
-            <p class="updated">Effective: Oct 31, 2026</p>
+            <p class="updated">Effective: Nov 7, 2026</p>
 
             <p>
                 This Privacy Policy describes what data
@@ -528,7 +543,7 @@
                 <li>the email address associated with the user's Google, GitHub, or Discord account;</li>
                 <li>the user's profile name and photo;</li>
                 <li>technical data required for authentication and synchronization;</li>
-                <li>the sign-in method used to create a note, and the setting for separating notes by sign-in method;</li>
+                <li>the sign-in method used to create a note, the setting for separating notes by sign-in method, and the trash retention period;</li>
                 <li>user-created note content, including titles, text, tags, and note pin status;</li>
                 <li>secret notes in encrypted form and vault service data;</li>
                 <li>note creation, modification, and deletion dates.</li>
@@ -620,11 +635,12 @@
             <p>Signing out or closing the Service does not automatically delete saved notes.</p>
 
             <p>
-                Interface settings (theme, text size, search filter,
-                auto-lock, and section state) are stored only
-                in the user's browser and are not sent to the server.
-                The exception is the setting for separating notes by sign-in method:
-                it is saved to the account so that it applies on all devices.
+                Interface settings (theme, language, text size, search filter
+                and sorting, auto-lock, visibility of interface elements,
+                and section state) are stored only in the user's browser
+                and are not sent to the server. The exceptions are the setting
+                for separating notes by sign-in method and the trash retention period:
+                they are saved to the account so that they apply on all devices.
                 The Service does not use cookies for advertising or analytics.
             </p>
 
@@ -633,13 +649,26 @@
             <p>When a note is deleted, it is moved to the trash.</p>
 
             <p>
-                For 15 days, the user may restore
+                Users choose how long notes stay in the trash
+                in the settings: 7, 15, or 30 days.
+                The default is 15 days.
+            </p>
+
+            <p>
+                During this period, the user may restore
                 the note or permanently delete it.
             </p>
 
             <p>
-                After 15 days, the note is deleted
-                the next time the user signs in to the Service.
+                If the user shortens the period while the trash
+                contains notes older than the new period,
+                the Service offers a choice: delete them right away
+                or restart the new period for them.
+            </p>
+
+            <p>
+                Once the period ends, the note is deleted
+                the next time the user opens the Service.
             </p>
 
             <p>
@@ -718,38 +747,50 @@
 
     <script>
         (() => {
+            const LANG_KEY = 'startNotes.privacyLanguage';
+            const THEME_KEY = 'startNotes.theme';
+            const TITLES = { ru: 'codeq notes ― Политика конфиденциальности', en: 'codeq notes ― Privacy Policy' };
             const buttons = document.querySelectorAll('.lang-btn');
             const sections = document.querySelectorAll('.lang-section');
 
             function switchLang(lang) {
-                sections.forEach(section => {
-                    section.classList.toggle('active', section.id === `lang-${lang}`);
-                });
-
-                buttons.forEach(button => {
-                    button.classList.toggle('active', button.dataset.lang === lang);
-                });
-
+                sections.forEach(s => s.classList.toggle('active', s.id === `lang-${lang}`));
+                buttons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
                 document.documentElement.lang = lang;
-
+                document.title = TITLES[lang];
                 try {
-                    localStorage.setItem('startNotes.privacyLanguage', lang);
+                    localStorage.setItem(LANG_KEY, lang);
                 } catch {}
             }
 
-            buttons.forEach(button => {
-                button.addEventListener('click', () => {
-                    switchLang(button.dataset.lang);
-                });
-            });
+            buttons.forEach(b => b.addEventListener('click', () => switchLang(b.dataset.lang)));
 
-            let savedLang = 'ru';
-
+            let saved = null;
             try {
-                savedLang = localStorage.getItem('startNotes.privacyLanguage') || 'ru';
+                saved = localStorage.getItem(LANG_KEY);
             } catch {}
+            if (saved !== 'ru' && saved !== 'en') {
+                saved = (navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en';
+            }
+            switchLang(saved);
 
-            switchLang(savedLang === 'en' ? 'en' : 'ru');
+            function applyTheme() {
+                let saved = 'system';
+                try {
+                    saved = localStorage.getItem(THEME_KEY) || 'system';
+                } catch {}
+                const theme = saved === 'system'
+                    ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                    : saved;
+                document.documentElement.setAttribute('data-theme', theme);
+                document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#13151a' : '#f7f8fa';
+            }
+
+            applyTheme();
+            matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+            window.addEventListener('storage', e => {
+                if (e.key === THEME_KEY) applyTheme();
+            });
         })();
     </script>
 </body>

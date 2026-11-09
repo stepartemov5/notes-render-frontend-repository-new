@@ -182,8 +182,8 @@
             border-radius: 6px;
             background-color: var(--btn-bg);
             color: var(--text-color);
-            font-family: 'PT Root UI', system-ui, sans-serif;
-            font-size: 14px;
+            font-family: 'Manrope', system-ui, sans-serif;
+            font-size: 13px;
             cursor: pointer;
             transition: background-color 0.2s ease, color 0.2s ease;
         }
@@ -234,7 +234,7 @@
         <div id="lang-ru" class="lang-section active">
             <h1>Условия использования сервиса codeq notes</h1>
 
-            <p class="updated">Вступает в силу: 31 октября 2026 года</p>
+            <p class="updated">Вступает в силу: 7 ноября 2026 года</p>
 
             <p>Настоящие Условия использования регулируют пользование сервисом codeq notes (далее — notes или Сервис).</p>
 
@@ -291,7 +291,9 @@
 
             <h2>8. Прекращение использования</h2>
 
-            <p>Пользователь может в любой момент перестать пользоваться Сервисом и удалить свои заметки. Удаление учётной записи в Сервисе не предусмотрено.</p>
+            <p>Пользователь может в любой момент перестать пользоваться Сервисом и удалить свои заметки. Удалённые заметки сначала попадают в корзину и хранятся там в течение срока, выбранного в настройках. Подробнее — в разделе 7 <a href="/privacy">Политики конфиденциальности</a>.</p>
+
+            <p>Удаление учётной записи в Сервисе не предусмотрено.</p>
 
             <h2>9. Изменения Условий</h2>
 
@@ -305,7 +307,7 @@
         <div id="lang-en" class="lang-section">
             <h1>Terms of Use for codeq notes</h1>
 
-            <p class="updated">Effective: Oct 31, 2026</p>
+            <p class="updated">Effective: Nov 7, 2026</p>
 
             <p>These Terms of Use govern your use of the codeq notes service (the “Service”).</p>
 
@@ -362,7 +364,9 @@
 
             <h2>8. Stopping Use of the Service</h2>
 
-            <p>Users may stop using the Service and delete their notes at any time. Account deletion is not provided by the Service.</p>
+            <p>Users may stop using the Service and delete their notes at any time. Deleted notes are first moved to the trash and kept there for the period chosen in the settings. See section 7 of the <a href="/privacy">Privacy Policy</a> for details.</p>
+
+            <p>Account deletion is not provided by the Service.</p>
 
             <h2>9. Changes to These Terms</h2>
 
@@ -399,7 +403,7 @@
                 saved = localStorage.getItem(LANG_KEY);
             } catch {}
             if (saved !== 'ru' && saved !== 'en') {
-                saved = navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+                saved = (navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en';
             }
             switchLang(saved);
 
