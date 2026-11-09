@@ -25,7 +25,12 @@ import {
     const THEME_KEY = 'startNotes.theme';
     const FONT_KEY = 'startNotes.fontSize';
     const SEARCH_FILTER_KEY = 'startNotes.searchFilter';
-    const TRASH_TTL = 15 * 24 * 60 * 60 * 1000;
+    const TRASH_DAY_OPTIONS = [7, 15, 30];
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let trashDays = 15;
+    function trashTtl() {
+        return trashDays * DAY_MS;
+    }
     const VALID_SEARCH_FILTERS = new Set(['all', 'title', 'content', 'tags']);
     const SORT_KEY = 'startNotes.sort';
     const SORT_KEYS = ['created', 'updated', 'title'];
@@ -88,6 +93,7 @@ import {
         fontSize: $('#fontSize'),
         fontPreview: $('#fontPreview'),
         themeOptions: $$('.theme-option[data-theme]'),
+        trashDaysOptions: $$('.trash-days-option'),
         formatButtons: $$('.toolbar-group [data-action]'),
         codeBtn: $('#codeBtn'),
         sidebar: $('.sidebar'),
@@ -1679,7 +1685,7 @@ import {
         return t('заметок');
     }
     function daysLeft(note) {
-        return Math.max(0, Math.ceil((TRASH_TTL - (Date.now() - note.deletedAt)) / 86400000));
+        return Math.max(0, Math.ceil((trashTtl() - (Date.now() - note.deletedAt)) / 86400000));
     }
     async function loadNotes() {
         if (!currentUser) {
@@ -1759,10 +1765,10 @@ import {
         const snapshot = await getDocs(collection(db, "users", currentUser.uid, "trash"));
         let all = snapshot.docs.map(d => normalizeStoredNote(d.id, d.data()));
         await hydrateSecretNotes(all);
-        const expired = all.filter(note => Date.now() - note.deletedAt > TRASH_TTL);
-        await Promise.all(expired.map(note => deleteDoc(doc(db, "users", currentUser.uid, "trash", note.id))));
-        all = all.filter(note => Date.now() - note.deletedAt <= TRASH_TTL);
         await ensureSpaceSettings();
+        const expired = all.filter(note => Date.now() - note.deletedAt > trashTtl());
+        await Promise.all(expired.map(note => deleteDoc(doc(db, "users", currentUser.uid, "trash", note.id))));
+        all = all.filter(note => Date.now() - note.deletedAt <= trashTtl());
         [trashedNotes, otherTrash] = splitBySpace(all);
     }
     function currentSpace() {
@@ -1786,7 +1792,10 @@ import {
                         return;
                     const settings = snapshot.docs.find(d => d.id === 'settings');
                     separateBySignIn = !!(settings && settings.data().separateBySignIn);
+                    const storedDays = settings ? Number(settings.data().trashDays) : NaN;
+                    trashDays = TRASH_DAY_OPTIONS.includes(storedDays) ? storedDays : 15;
                     updateSpaceSetting();
+                    updateTrashDaysControls();
                 })
                 .catch(error => {
                     spaceSettingsPromise = null;
@@ -1829,7 +1838,7 @@ import {
         updateSpaceSetting();
         applySpaces();
         try {
-            await setDoc(doc(db, "users", currentUser.uid, "vault", "settings"), { separateBySignIn });
+            await setDoc(doc(db, "users", currentUser.uid, "vault", "settings"), { separateBySignIn, trashDays });
         }
         catch (error) {
             separateBySignIn = previous;
@@ -2121,7 +2130,7 @@ import {
         }
         const { el: n, hide } = showNotification(`
         <div class="notification-title">${t('Удалить {count} {notes}?', { count, notes: pluralNotes(count) })}</div>
-        <div class="notification-text">${t('Заметки будут в корзине 15 дней, после чего удалятся автоматически.')}</div>
+        <div class="notification-text">${t('Заметки будут в корзине {days} {unit}, после чего удалятся автоматически.', { days: trashDays, unit: pluralDays(trashDays) })}</div>
         <div class="notification-actions">
             <button class="notification-cancel" type="button">${t('Отмена')}</button>
             <button class="notification-confirm danger" type="button">${t('Удалить')}</button>
@@ -2238,7 +2247,7 @@ import {
             el.trashList.appendChild(emptyState({
                 icon: 'trash-bin.svg',
                 title: t('Корзина пуста'),
-                text: t('Заметки сидят в корзине 15 дней. Сейчас тут никого нет.'),
+                text: t('Заметки сидят в корзине {days} {unit}. Сейчас тут никого нет.', { days: trashDays, unit: pluralDays(trashDays) }),
                 compact: true
             }));
             if (el.trashCount)
@@ -2548,29 +2557,70 @@ import {
         const img = el.pinNoteBtn.querySelector('img');
         img.src = isPinned ? 'pinned.svg' : 'pin.svg';
     }
-    function renderTrashBanner(note) {
-        removeTrashBanner();
+    function trashBannerState(note) {
         const days = daysLeft(note);
+        const date = new Date(note.deletedAt + trashTtl()).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
+        return {
+            days,
+            when: days > 0
+                ? t('Удалится через {days} {unit} · {date}', { days, unit: pluralDays(days), date })
+                : t('Удалится сегодня'),
+            left: Math.max(0, Math.min(1, (note.deletedAt + trashTtl() - Date.now()) / trashTtl()))
+        };
+    }
+    function fillTrashBanner(banner, note) {
+        const state = trashBannerState(note);
+        banner.classList.toggle('urgent', state.days <= 3);
+        banner.querySelector('.trash-banner-title').textContent = t('Заметка в корзине');
+        banner.querySelector('.trash-banner-text').textContent = state.when;
+        banner.querySelector('.trash-banner-meter > span').style.width = `${(state.left * 100).toFixed(1)}%`;
+        banner.querySelector('.trash-banner-restore').textContent = t('Восстановить');
+        banner.querySelector('.trash-banner-delete').textContent = t('Удалить навсегда');
+    }
+    function lockTrashEditor() {
+        el.noteTitle.disabled = true;
+        el.noteContent.contentEditable = 'false';
+    }
+    function renderTrashBanner(note) {
+        const existing = document.getElementById('trashBanner');
+        if (existing) {
+            existing.dataset.id = note.id;
+            fillTrashBanner(existing, note);
+            lockTrashEditor();
+            return;
+        }
         const banner = document.createElement('div');
         banner.id = 'trashBanner';
         banner.className = 'trash-banner';
+        banner.dataset.id = note.id;
         banner.innerHTML = `
-            <span class="trash-banner-text">${t('в корзине · до удаления {days} {unit}', { days, unit: pluralDays(days) })}</span>
+            <span class="trash-banner-icon" aria-hidden="true"></span>
+            <div class="trash-banner-info">
+                <strong class="trash-banner-title"></strong>
+                <span class="trash-banner-text"></span>
+                <span class="trash-banner-meter"><span></span></span>
+            </div>
             <div class="trash-banner-actions">
-                <button class="trash-banner-restore" type="button">${t('Восстановить')}</button>
-                <button class="trash-banner-delete" type="button">${t('Удалить навсегда')}</button>
+                <button class="trash-banner-restore" type="button"></button>
+                <button class="trash-banner-delete" type="button"></button>
             </div>
         `;
-        document.querySelector('.toolbar').before(banner);
-        banner.querySelector('.trash-banner-restore').addEventListener('click', () => restoreNote(note.id));
+        fillTrashBanner(banner, note);
+        document.querySelector('.editor-header').before(banner);
+        document.querySelector('.editor').classList.add('trash-view');
+        lockTrashEditor();
+        banner.querySelector('.trash-banner-restore').addEventListener('click', () => restoreNote(banner.dataset.id));
         banner.querySelector('.trash-banner-delete').addEventListener('click', () => {
-            showPermanentDeleteConfirmNotification(note.id);
+            showPermanentDeleteConfirmNotification(banner.dataset.id);
         });
     }
     function removeTrashBanner() {
         const banner = document.getElementById('trashBanner');
         if (banner)
             banner.remove();
+        const editor = document.querySelector('.editor');
+        if (editor)
+            editor.classList.remove('trash-view');
         el.noteTitle.disabled = false;
         el.noteContent.contentEditable = 'true';
     }
@@ -3180,18 +3230,36 @@ import {
         }
         return c;
     }
+    const MAX_NOTIFICATIONS = 2;
     function showNotification(html, onMount) {
         const n = document.createElement('div');
         n.className = 'notification';
         n.innerHTML = html;
-        getNotificationContainer().appendChild(n);
+        const container = getNotificationContainer();
+        const title = (n.querySelector('.notification-title') || n).textContent.trim();
+        const shown = Array.from(container.querySelectorAll('.notification:not(.leaving)'));
+        shown.forEach(other => {
+            const otherTitle = (other.querySelector('.notification-title') || other).textContent.trim();
+            if (title && otherTitle === title && other.hideNotification)
+                other.hideNotification();
+        });
+        const remaining = Array.from(container.querySelectorAll('.notification:not(.leaving)'));
+        remaining.slice(0, Math.max(0, remaining.length - MAX_NOTIFICATIONS + 1)).forEach(other => {
+            if (other.hideNotification)
+                other.hideNotification();
+        });
+        container.appendChild(n);
         requestAnimationFrame(() => n.classList.add('visible'));
         if (onMount)
             onMount(n);
         function hide() {
+            if (n.classList.contains('leaving'))
+                return;
+            n.classList.add('leaving');
             n.classList.remove('visible');
             setTimeout(() => n.remove(), 300);
         }
+        n.hideNotification = hide;
         return { el: n, hide };
     }
     function showPermanentDeleteConfirmNotification(noteId) {
@@ -3270,7 +3338,7 @@ import {
     function showDeleteConfirmNotification(noteId) {
         const { el: n, hide } = showNotification(`
             <div class="notification-title">${t('Удалить заметку?')}</div>
-            <div class="notification-text">${t('Заметка будет перемещена в корзину. Её можно восстановить в течение 15 дней.')}</div>
+            <div class="notification-text">${t('Заметка будет перемещена в корзину. Её можно восстановить в течение {days} {unit}.', { days: trashDays, unit: pluralDays(trashDays) })}</div>
             <div class="notification-actions">
                 <button class="notification-cancel" type="button">${t('Отмена')}</button>
                 <button class="notification-confirm danger" type="button">${t('Удалить')}</button>
@@ -5202,6 +5270,7 @@ import {
         el.body.classList.add('settings-open');
     }
     function closeSettings() {
+        hideTrashDaysConfirm();
         closeWhatsNewPage();
         el.settingsPanel.classList.remove('open');
         el.body.classList.remove('settings-open');
@@ -5342,7 +5411,9 @@ import {
         currentUser = user;
         spaceSettingsPromise = null;
         separateBySignIn = false;
+        trashDays = 15;
         updateSpaceSetting();
+        updateTrashDaysControls();
         const img = el.loginBtn.querySelector('img');
         const title = el.loginBtn.querySelector('strong');
         if (user) {
@@ -6282,7 +6353,6 @@ import {
     ];
     let googleSans = loadGoogleSansSettings();
     let googleSansLoaded = false;
-    let googleSansSwapTimer = null;
     function loadGoogleSansSettings() {
         try {
             const raw = JSON.parse(localStorage.getItem(GOOGLE_SANS_KEY));
@@ -6330,16 +6400,6 @@ import {
             el.googleSansToggle.setAttribute('aria-pressed', String(googleSans.allowed));
         }
     }
-    function swapEditorFont() {
-        const editor = document.querySelector('.editor');
-        if (!editor || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-            return;
-        editor.classList.remove('font-swap');
-        void editor.offsetWidth;
-        editor.classList.add('font-swap');
-        clearTimeout(googleSansSwapTimer);
-        googleSansSwapTimer = setTimeout(() => editor.classList.remove('font-swap'), 500);
-    }
     function setupGoogleSans() {
         applyGoogleSans();
         if (el.googleSansBtn) {
@@ -6353,7 +6413,6 @@ import {
                 else
                     note.font = 'google-sans';
                 applyGoogleSans();
-                swapEditorFont();
                 await persistActiveNote(true);
             });
         }
@@ -6368,7 +6427,157 @@ import {
             });
         }
     }
+    function updateTrashDaysControls(selected = trashDays) {
+        (el.trashDaysOptions || []).forEach(btn => {
+            const days = Number(btn.dataset.trashDays);
+            btn.classList.toggle('active', days === selected);
+            btn.textContent = `${days} ${pluralDays(days)}`;
+        });
+    }
+    function trashTouchStored(note) {
+        if (note.secret && (note.locked || !vaultKey)) {
+            if (!note.enc)
+                return null;
+            return {
+                id: note.id,
+                secret: true,
+                pinned: false,
+                createdAt: note.createdAt,
+                updatedAt: note.updatedAt,
+                ...(note.font ? { font: note.font } : {}),
+                ...(note.space ? { space: note.space } : {}),
+                enc: note.enc,
+                deletedAt: note.deletedAt
+            };
+        }
+        return toStoredNote(note);
+    }
+    async function restartTrashCountdown(list) {
+        const now = Date.now();
+        let failed = 0;
+        for (const note of list) {
+            const previous = note.deletedAt;
+            note.deletedAt = now;
+            try {
+                const stored = await trashTouchStored(note);
+                if (!stored)
+                    throw new Error('no-stored-copy');
+                await setDoc(doc(db, "users", currentUser.uid, "trash", note.id), stored);
+            }
+            catch (error) {
+                note.deletedAt = previous;
+                failed++;
+                console.error(error);
+            }
+        }
+        return failed;
+    }
+    async function applyTrashDays(days) {
+        const previous = trashDays;
+        trashDays = days;
+        updateTrashDaysControls();
+        try {
+            await setDoc(doc(db, "users", currentUser.uid, "vault", "settings"), { separateBySignIn, trashDays });
+        }
+        catch (error) {
+            trashDays = previous;
+            updateTrashDaysControls();
+            handleFirebaseError(error);
+            return false;
+        }
+        try {
+            await loadTrash();
+        }
+        catch (error) {
+            handleFirebaseError(error);
+        }
+        renderTrash();
+        const trashed = getTrashedNote(activeNoteId);
+        if (trashed && document.getElementById('trashBanner'))
+            renderTrashBanner(trashed);
+        else if (document.getElementById('trashBanner') && !trashed) {
+            activeNoteId = pickNextNoteId();
+            renderEditor();
+            renderNotesList();
+        }
+        return true;
+    }
+    function hideTrashDaysConfirm() {
+        const box = $('#trashDaysConfirm');
+        if (box) {
+            box.hidden = true;
+            box.innerHTML = '';
+        }
+        updateTrashDaysControls();
+    }
+    function showTrashDaysConfirm(days, doomed) {
+        const box = $('#trashDaysConfirm');
+        if (!box)
+            return;
+        updateTrashDaysControls(days);
+        const unit = pluralDays(days);
+        box.innerHTML = `
+            <p class="trash-days-confirm-text">${escapeHtml(t('В корзине есть заметки старше {days} {unit}: {count}. Что с ними сделать?', { days, unit, count: doomed.length }))}</p>
+            <div class="trash-days-confirm-actions">
+                <button type="button" class="trash-days-keep">${escapeHtml(t('Дать им ещё {days} {unit}', { days, unit }))}</button>
+                <button type="button" class="trash-days-purge">${escapeHtml(t('Удалить сразу'))}</button>
+            </div>
+            <button type="button" class="trash-days-cancel">${escapeHtml(t('Оставить как было'))}</button>
+            <p class="trash-days-confirm-error" hidden></p>
+        `;
+        box.hidden = false;
+        const buttons = box.querySelectorAll('button');
+        const busy = on => buttons.forEach(btn => { btn.disabled = on; });
+        const fail = text => {
+            const error = box.querySelector('.trash-days-confirm-error');
+            error.textContent = text;
+            error.hidden = false;
+            busy(false);
+        };
+        box.querySelector('.trash-days-cancel').addEventListener('click', hideTrashDaysConfirm);
+        box.querySelector('.trash-days-keep').addEventListener('click', async () => {
+            busy(true);
+            const failed = await restartTrashCountdown(doomed);
+            if (failed) {
+                fail(t('Не у всех заметок получилось обновить срок. Настройка не изменилась.'));
+                return;
+            }
+            if (!await applyTrashDays(days)) {
+                fail(t('Настройка не сохранилась. Вернулось прежнее значение.'));
+                return;
+            }
+            hideTrashDaysConfirm();
+        });
+        box.querySelector('.trash-days-purge').addEventListener('click', async () => {
+            busy(true);
+            if (!await applyTrashDays(days)) {
+                fail(t('Настройка не сохранилась. Вернулось прежнее значение.'));
+                return;
+            }
+            hideTrashDaysConfirm();
+        });
+    }
+    async function setTrashDays(days) {
+        if (!currentUser || !TRASH_DAY_OPTIONS.includes(days))
+            return;
+        if (days === trashDays) {
+            hideTrashDaysConfirm();
+            return;
+        }
+        await ensureSpaceSettings();
+        const ttl = days * DAY_MS;
+        const doomed = [...trashedNotes, ...otherTrash].filter(note => Date.now() - note.deletedAt > ttl);
+        if (!doomed.length) {
+            hideTrashDaysConfirm();
+            if (!await applyTrashDays(days))
+                showErrorToast(t('Настройка не сохранена'), t('Вернулось прежнее значение.'));
+            return;
+        }
+        showTrashDaysConfirm(days, doomed);
+    }
     function updateLanguageControls() {
+        if (!$('#trashDaysConfirm') || $('#trashDaysConfirm').hidden)
+            updateTrashDaysControls();
         document.querySelectorAll('.lang-option').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.lang === lang);
         });
@@ -6446,14 +6655,9 @@ import {
             relabelNotesList();
             renderTrash();
             renderSelectionBar();
-            const banner = document.getElementById('trashBanner');
             const trashed = getTrashedNote(activeNoteId);
-            if (banner && trashed) {
-                const days = daysLeft(trashed);
-                banner.querySelector('.trash-banner-text').textContent = t('в корзине · до удаления {days} {unit}', { days, unit: pluralDays(days) });
-                banner.querySelector('.trash-banner-restore').textContent = t('Восстановить');
-                banner.querySelector('.trash-banner-delete').textContent = t('Удалить навсегда');
-            }
+            if (document.getElementById('trashBanner') && trashed)
+                renderTrashBanner(trashed);
         }
         else if (el.welcomeScreen.classList.contains('visible')) {
             runPreviewAnimation(300);
@@ -6940,6 +7144,9 @@ import {
         el.themeOptions.forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
         document.querySelectorAll('.lang-option').forEach(btn => {
             btn.addEventListener('click', () => switchLanguage(btn.dataset.lang));
+        });
+        (el.trashDaysOptions || []).forEach(btn => {
+            btn.addEventListener('click', () => setTrashDays(Number(btn.dataset.trashDays)));
         });
         const welcomeLang = $('#welcomeLang');
         if (welcomeLang)
