@@ -2101,7 +2101,7 @@ body.settings-open .notification-container {
     width: 17px;
     height: 17px;
 
-    border-radius: 50%;
+    border-radius: 999px;
 
     background: var(--panel);
 
@@ -2109,7 +2109,25 @@ body.settings-open .notification-container {
 
     transform: translateX(0);
 
-    transition: transform 0.18s var(--ease);
+    transition:
+        transform 0.32s cubic-bezier(0.3, 1.35, 0.5, 1),
+        width 0.2s var(--ease),
+        box-shadow 0.2s var(--ease);
+}
+
+.settings-toggle:active span {
+    width: 22px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.settings-toggle.active:active span {
+    transform: translateX(10px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .settings-toggle span {
+        transition: none;
+    }
 }
 
 .settings-toggle.active {
@@ -4489,6 +4507,7 @@ body.lang-out .editor > * {
 
 .trash-days-cancel:hover:not(:disabled) {
     border-bottom-style: solid;
+    color: var(--text);
 }
 
 .trash-days-confirm button:disabled {
