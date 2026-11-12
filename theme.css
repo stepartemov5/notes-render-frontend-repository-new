@@ -4507,7 +4507,6 @@ body.lang-out .editor > * {
 
 .trash-days-cancel:hover:not(:disabled) {
     border-bottom-style: solid;
-    color: var(--text);
 }
 
 .trash-days-confirm button:disabled {
