@@ -3579,6 +3579,12 @@ import {
             btn.addEventListener('click', () => loginWith(btn.dataset.provider, scope));
         });
     }
+    window.addEventListener('pageshow', () => {
+        document.querySelectorAll('[data-provider]').forEach(btn => {
+            btn.classList.remove('is-loading');
+            btn.disabled = false;
+        });
+    });
     async function saveBeforeLeaving() {
         clearTimeout(autosaveTimer);
         try {

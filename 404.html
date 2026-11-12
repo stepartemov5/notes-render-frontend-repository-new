@@ -4,65 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
-    <title>Страница не найдена — Заметки</title>
-    <link rel="icon" href="логотип заметки.svg" type="image/svg+xml">
-    <script defer src="http://127.0.0.1:5500/tracker/a.js"
+    <meta name="theme-color" content="#f7f8fa">
+    <meta name="robots" content="noindex">
+    <title>Страница не найдена ― codeq notes</title>
+    <link rel="icon" href="/иконка заметки.svg" type="image/svg+xml">
+    <script defer src="https://codeqanalytics.onrender.com/tracker/a.js"
     data-site="d1b5ca24-128d-4778-b5cf-6532bc7e6aee"
     data-api="https://zlxugwlfmzlrvsqovnyd.supabase.co/functions/v1/collect"></script>
     <script>
         (() => {
             try {
-                const savedTheme = localStorage.getItem("startNotes.theme") || "system";
-                const theme =
-                    savedTheme === "system"
-                        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
-                        : savedTheme;
+                const saved = localStorage.getItem("startNotes.theme") || "system";
+                const theme = saved === "system"
+                    ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+                    : saved;
                 document.documentElement.setAttribute("data-theme", theme);
             } catch {}
         })();
     </script>
     <style>
-      @font-face {
-        font-family: 'PT Root UI';
-        src: url(pt-root-ui_vf.woff);
-        font-weight: 400;
-        font-style: normal;
-        font-display: swap;
-      }
+        @font-face {
+            font-family: 'PT Root UI';
+            src: url(/pt-root-ui_vf.woff);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
 
-      @font-face {
-        font-family: 'Manrope';
-        src: url(Manrope-VariableFont_wght.ttf);
-        font-weight: 400;
-        font-style: normal;
-        font-display: swap;
-      }
+        @font-face {
+            font-family: 'Manrope';
+            src: url(/Manrope-VariableFont_wght.ttf);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
 
-      :root {
+        @font-face {
+            font-family: 'JetBrains Mono';
+            src: url(/JetBrainsMono[wght].ttf);
+            font-weight: 400;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            color-scheme: light;
             --background: #f7f8fa;
+            --panel: #ffffff;
             --text: #1d2024;
             --desc: #6b7280;
+            --border: #e7eaee;
             --accent: #fbd438;
             --accent-text: #1d2024;
             --accent-subtle: rgba(251, 212, 56, 0.16);
+            --danger: #e2504a;
             --radius-sm: 10px;
+            --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
+            --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+            --card-shadow: 0 40px 70px -50px rgba(20, 24, 32, 0.35);
         }
 
         :root[data-theme="dark"] {
-          --background: #16181b;
-          --text: #f3f4f6;
-          --desc: #a5acb8;
-          --accent: #6b8dff;
-          --accent-text: #ffffff;
-          --accent-subtle: rgba(107, 141, 255, 0.14);
-          --icon-filter: brightness(0) invert(1);
+            color-scheme: dark;
+            --background: #16181b;
+            --panel: #1d2024;
+            --text: #f3f4f6;
+            --desc: #a5acb8;
+            --border: #30343b;
+            --accent: #6b8dff;
+            --accent-text: #ffffff;
+            --accent-subtle: rgba(107, 141, 255, 0.14);
+            --icon-filter: brightness(0) invert(1);
+            --card-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.6);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -70,105 +91,522 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            min-height: 100dvh;
+            padding: 96px 28px 48px;
             background: var(--background);
             color: var(--text);
-            font-family: 'PT Root UI', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
+            font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
             -webkit-font-smoothing: antialiased;
-            padding: 24px;
-            transition: background-color 0.25s var(--ease), color 0.25s var(--ease);
         }
 
         ::selection {
-          background: var(--accent-subtle);
-          color: var(--text);
+            background: var(--accent-subtle);
+            color: var(--text);
         }
 
-        .error {
+        .brand {
+            position: fixed;
+            top: 24px;
+            left: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+            font-family: 'PT Root UI', system-ui, sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .brand img {
+            width: 28px;
+            height: 28px;
+            filter: var(--icon-filter, none);
+            pointer-events: none;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+            align-items: center;
+            gap: 64px;
             width: 100%;
-            max-width: 340px;
+            max-width: 940px;
+        }
+
+        .kicker {
+            display: block;
+            margin-bottom: 14px;
+            color: var(--desc);
+            font-size: 12px;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .code {
+            display: flex;
+            margin-bottom: 22px;
+            color: var(--accent);
+            font-family: 'PT Root UI', system-ui, sans-serif;
+            font-size: clamp(96px, 14vw, 156px);
+            font-weight: 700;
+            line-height: 0.85;
+            letter-spacing: -0.04em;
+            user-select: none;
+            cursor: default;
+        }
+
+        .code span {
+            display: inline-block;
+            width: 0.6em;
             text-align: center;
         }
 
-        .error-icon {
-            width: 36px;
-            height: 36px;
-            margin: 0 auto 24px;
-            opacity: 0.7;
-            filter: var(--icon-filter, none);
-            transition: filter 0.25s var(--ease);
-        }
-
-        .error-code {
-            font-size: 14px;
-            font-weight: 700;
-            /* letter-spacing: 0.08em; */
-            color: var(--accent);
-            margin-bottom: 12px;
-        }
-
-        .error-title {
-            font-size: 24px;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            margin-bottom: 14px;
-        }
-
-        .error-text {
-            font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
-            font-size: 13.5px;
-            line-height: 1.6;
+        .code span.scrambling {
             color: var(--desc);
-            margin-bottom: 32px;
+            opacity: 0.55;
         }
 
-        .error-btn {
-            position: relative;
+        .title {
+            max-width: 15em;
+            margin-bottom: 14px;
+            font-family: 'PT Root UI', system-ui, sans-serif;
+            font-size: clamp(24px, 3vw, 30px);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+        }
+
+        .text {
+            max-width: 30em;
+            margin-bottom: 28px;
+            color: var(--desc);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            user-select: none;
-            padding: 0 24px;
             height: 42px;
-            background: transparent;
-            color: var(--accent-text);
-            border: none;
+            padding: 0 22px;
+            border: 0;
             border-radius: var(--radius-sm);
+            background: var(--accent);
+            color: var(--accent-text);
+            font-family: inherit;
             font-size: 14px;
             font-weight: 600;
             text-decoration: none;
-            overflow: hidden;
+            user-select: none;
+            cursor: pointer;
+            transition: filter 0.15s var(--ease), box-shadow 0.3s var(--ease);
         }
 
-        .error-btn::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: var(--accent);
-            border-radius: inherit;
-            transition: transform 0.15s var(--ease);
-        }
-
-        .error-btn:hover::before {
+        .btn:hover {
             filter: brightness(1.05);
         }
 
-        .error-btn:active::before {
-            transform: scale(0.96);
+        .btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
         }
 
-        .error-btn span {
-            position: relative;
-            z-index: 1;
+        .btn.nudge {
+            box-shadow: 0 0 0 6px var(--accent-subtle);
+        }
+
+        .card {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 18px;
+            border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+            border-radius: 16px;
+            background: var(--panel);
+            box-shadow: var(--card-shadow);
+        }
+
+        .card.shake {
+            animation: shake 0.42s var(--ease);
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+        }
+
+        .lock {
+            flex: 0 0 15px;
+            height: 15px;
+            background-color: var(--accent);
+            -webkit-mask: url('/lock.svg') center / contain no-repeat;
+            mask: url('/lock.svg') center / contain no-repeat;
+        }
+
+        .card-title {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .badge {
+            flex-shrink: 0;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: var(--accent-subtle);
+            color: var(--accent);
+            font-size: 10.5px;
+            font-weight: 700;
+        }
+
+        .cipher {
+            min-height: 76px;
+            max-height: 96px;
+            padding: 12px;
+            overflow: hidden;
+            border-radius: var(--radius-sm);
+            background: var(--background);
+            color: var(--desc);
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.6;
+            overflow-wrap: anywhere;
+            user-select: none;
+            transition: color 0.3s var(--ease);
+        }
+
+        .cipher.tick {
+            animation: tick 0.5s var(--ease-out);
+        }
+
+        .unlock {
+            display: flex;
+            gap: 8px;
+        }
+
+        .field {
+            flex: 1;
+            min-width: 0;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--background);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            -webkit-text-security: disc;
+            transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
+        }
+
+        .field::placeholder {
+            color: var(--desc);
+            opacity: 0.8;
+        }
+
+        .field:focus {
+            border-color: var(--accent);
+            background: var(--panel);
+        }
+
+        .open {
+            flex-shrink: 0;
+            height: 40px;
+            padding: 0 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--panel);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color 0.15s var(--ease);
+        }
+
+        .open:hover {
+            border-color: var(--accent);
+        }
+
+        .reply {
+            min-height: 20px;
+            color: var(--desc);
+            font-size: 12.5px;
+            line-height: 1.55;
+        }
+
+        .reply.error {
+            color: var(--danger);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: none; }
+            20% { transform: translateX(-7px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(2px); }
+        }
+
+        @keyframes tick {
+            from { color: var(--accent); }
+            to   { color: var(--desc); }
+        }
+
+        .layout > * {
+            animation: rise 0.7s var(--ease-out) backwards;
+        }
+
+        .layout > :nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        @media (max-width: 800px) {
+            body {
+                align-items: flex-start;
+                padding: 84px 18px 32px;
+            }
+
+            .brand {
+                top: 20px;
+                left: 18px;
+            }
+
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 32px;
+            }
+
+            .field {
+                font-size: 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .layout > *,
+            .card.shake,
+            .cipher.tick {
+                animation: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="error">
-        <img src="логотип заметки.svg" alt="" class="error-icon">
-        <div class="error-code">404</div>
-        <h1 class="error-title">Страница потерялась</h1>
-        <p class="error-text">Мы обыскали все заметки, даже закреплённые — такой страницы тут нет. Возможно, её удалили, а потом ещё и из корзины забыли достать.</p>
-        <a href="/" class="error-btn"><span>Вернуться на главную</span></a>
-    </div>
+    <a href="/" class="brand">
+        <img src="/логотип заметки.svg">
+        <span>codeq notes</span>
+    </a>
+
+    <main class="layout">
+        <section>
+            <span class="kicker" data-text="kicker">ошибка 404</span>
+            <div class="code" id="code"><span>4</span><span>0</span><span>4</span></div>
+            <h1 class="title" data-text="title">Эта страница засекречена. Настолько, что её нет.</h1>
+            <p class="text" data-text="text">Мы зашифровали её так надёжно, что сами потеряли ключ. Можно попробовать её открыть, но выход надёжнее.</p>
+            <a href="/" class="btn" id="home" data-text="home">К заметкам</a>
+        </section>
+
+        <form class="card" id="card" autocomplete="off">
+            <div class="card-head">
+                <span class="lock"></span>
+                <span class="card-title" id="cardTitle"></span>
+                <span class="badge" data-text="badge">секретная</span>
+            </div>
+            <div class="cipher" id="cipher"></div>
+            <div class="unlock">
+                <input class="field" id="field" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" data-placeholder="field">
+                <button class="open" type="submit" data-text="open">Открыть</button>
+            </div>
+            <p class="reply" id="reply" data-text="hint">Шифр выше настоящий: AES-256 прямо в этом браузере.</p>
+        </form>
+    </main>
+
+    <script>
+        (() => {
+            const TEXT = {
+                ru: {
+                    field: 'Пароль от страницы',
+                    replies: [
+                        'Неверный пароль.',
+                        'Снова мимо. Попробуйте ещё — шучу, не надо.',
+                        'Даже правильный пароль не поможет: шифровать было нечего.',
+                        'Хранилище пустое. Выход — кнопка «К заметкам».'
+                    ]
+                },
+                en: {
+                    kicker: 'error 404',
+                    title: 'This page is classified. So classified it doesn’t exist.',
+                    text: 'We encrypted it so well we lost the key ourselves. You can try to unlock it, but the exit is a safer bet.',
+                    home: 'Back to notes',
+                    badge: 'secret',
+                    open: 'Unlock',
+                    hint: 'The cipher above is real: AES-256, right in this browser.',
+                    field: 'Page password',
+                    replies: [
+                        'Wrong password.',
+                        'Missed again. Try once more — kidding, please don’t.',
+                        'Even the right password won’t help: there was nothing to encrypt.',
+                        'The vault is empty. The way out is “Back to notes”.'
+                    ]
+                }
+            };
+
+            let lang = null;
+            try {
+                lang = localStorage.getItem('startNotes.language');
+            } catch {}
+            if (lang !== 'ru' && lang !== 'en') {
+                lang = (navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en';
+            }
+            const text = TEXT[lang];
+            if (lang === 'en') {
+                document.documentElement.lang = 'en';
+                document.title = 'Page not found ― codeq notes';
+                document.querySelectorAll('[data-text]').forEach(node => {
+                    const value = text[node.dataset.text];
+                    if (value)
+                        node.textContent = value;
+                });
+            }
+
+            const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.querySelector('meta[name="theme-color"]').content = dark ? '#16181b' : '#f7f8fa';
+
+            const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const field = document.getElementById('field');
+            const cipher = document.getElementById('cipher');
+            const card = document.getElementById('card');
+            const reply = document.getElementById('reply');
+            const home = document.getElementById('home');
+            field.placeholder = text.field;
+
+            let path = '/';
+            try {
+                path = decodeURIComponent(location.pathname);
+            } catch {
+                path = location.pathname;
+            }
+            if (path.length > 60)
+                path = path.slice(0, 57) + '…';
+            document.getElementById('cardTitle').textContent = path;
+
+            const GLYPHS = '0123456789ABCDEF#%&?';
+            const digits = Array.from(document.querySelectorAll('#code span'));
+            let scrambleTimer = null;
+            function scramble() {
+                if (reduced)
+                    return;
+                clearInterval(scrambleTimer);
+                const start = performance.now();
+                scrambleTimer = setInterval(() => {
+                    const elapsed = performance.now() - start;
+                    let done = true;
+                    digits.forEach((digit, index) => {
+                        const final = '404'[index];
+                        if (elapsed > 520 + index * 220) {
+                            digit.textContent = final;
+                            digit.classList.remove('scrambling');
+                        }
+                        else {
+                            done = false;
+                            digit.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+                            digit.classList.add('scrambling');
+                        }
+                    });
+                    if (done)
+                        clearInterval(scrambleTimer);
+                }, 55);
+            }
+            scramble();
+            document.getElementById('code').addEventListener('mouseenter', scramble);
+
+            const encoder = new TextEncoder();
+            let keyPromise = null;
+            function getKey() {
+                if (!keyPromise && window.crypto && crypto.subtle) {
+                    keyPromise = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt']);
+                }
+                return keyPromise;
+            }
+            function toBase64(bytes) {
+                let binary = '';
+                bytes.forEach(byte => { binary += String.fromCharCode(byte); });
+                return btoa(binary);
+            }
+            function fakeCipher(length) {
+                const bytes = new Uint8Array(length);
+                crypto.getRandomValues(bytes);
+                return toBase64(bytes);
+            }
+            let encryptRun = 0;
+            async function encrypt(value) {
+                const run = ++encryptRun;
+                const source = value || path;
+                let output;
+                try {
+                    const key = await getKey();
+                    const iv = crypto.getRandomValues(new Uint8Array(12));
+                    const data = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(source)));
+                    const joined = new Uint8Array(iv.length + data.length);
+                    joined.set(iv);
+                    joined.set(data, iv.length);
+                    output = toBase64(joined);
+                }
+                catch {
+                    output = fakeCipher(28 + source.length);
+                }
+                if (run !== encryptRun)
+                    return;
+                cipher.textContent = output;
+                if (!reduced) {
+                    cipher.classList.remove('tick');
+                    void cipher.offsetWidth;
+                    cipher.classList.add('tick');
+                }
+            }
+            encrypt('');
+            field.addEventListener('input', () => encrypt(field.value));
+
+            let attempts = 0;
+            card.addEventListener('submit', event => {
+                event.preventDefault();
+                const index = Math.min(attempts, text.replies.length - 1);
+                attempts++;
+                reply.textContent = text.replies[index];
+                reply.classList.add('error');
+                field.value = '';
+                encrypt('');
+                if (!reduced) {
+                    card.classList.remove('shake');
+                    void card.offsetWidth;
+                    card.classList.add('shake');
+                }
+                if (attempts >= 3)
+                    home.classList.add('nudge');
+                field.focus({ preventScroll: true });
+            });
+        })();
+    </script>
 </body>
 </html>

@@ -328,6 +328,7 @@ const EN = {
     "В корзине есть заметки старше {days} {unit}: {count}. Что с ними сделать?": "Some notes have been in the trash longer than {days} {unit}: {count}. What should happen to them?",
     "Дать им ещё {days} {unit}": "Give them {days} more {unit}",
     "Удалить сразу": "Delete now",
+    "Оставить как было": "Keep as is",
     "Назад": "Back",
     "Не у всех заметок получилось обновить срок. Настройка не изменилась.": "Some notes couldn't get a new countdown. The setting stayed the same.",
     "Настройка не сохранилась. Вернулось прежнее значение.": "The setting wasn't saved. The previous value is back.",
