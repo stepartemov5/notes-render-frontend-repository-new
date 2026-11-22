@@ -3018,6 +3018,36 @@ body.app-enter .editor.note-enter .note-content {
     }
 }
 
+.editor.note-switch .note-title,
+.editor.note-switch .tags,
+.editor.note-switch .note-content {
+    animation: note-switch-in 0.24s var(--ease) 0.05s backwards;
+}
+
+@keyframes note-switch-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.editor .note-ghost {
+    position: absolute;
+    z-index: 2;
+    margin: 0;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.editor .note-ghost.leaving {
+    animation: note-ghost-out 0.2s var(--ease) forwards;
+}
+
+@keyframes note-ghost-out {
+    from { opacity: var(--ghost-from, 1); }
+    to   { opacity: 0; }
+}
+
 body.app-reveal .editor > *:not(.find-bar),
 body.app-enter .sidebar-top,
 body.app-enter .notes-list,
@@ -3035,7 +3065,8 @@ body.app-enter .editor-footer,
 
 @media (prefers-reduced-motion: reduce) {
     body.app-enter *,
-    .editor.note-enter * {
+    .editor.note-enter *,
+    .editor.note-switch * {
         animation: none !important;
     }
 }
@@ -3144,9 +3175,10 @@ body.google-sans .note-title {
     z-index: 150;
     display: flex;
     flex-direction: column;
-    padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+    padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
     overflow-y: auto;
-    background: var(--panel);
+    overscroll-behavior: contain;
+    background: var(--background);
     opacity: 0;
     transition: opacity 0.24s var(--ease);
 }
@@ -3155,44 +3187,97 @@ body.google-sans .note-title {
     opacity: 1;
 }
 
+/* ---------- верх: заметка или стопка заметок ---------- */
+
 .vault-screen-hero {
     flex: 1 1 auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 170px;
-    margin-bottom: 20px;
-    border-radius: var(--radius-lg);
-    background:
-        radial-gradient(circle at 50% 45%, var(--accent-subtle), transparent 70%),
-        var(--background);
-    overflow: hidden;
+    gap: 22px;
+    min-height: 190px;
+    padding: 28px 0 24px;
+    background: radial-gradient(ellipse 70% 60% at 50% 48%, var(--accent-subtle), transparent 72%);
+    transition: background-color 0.3s var(--ease);
+}
+
+.vault-screen-hero.swap > * {
+    animation: vault-hero-in 0.4s var(--ease-out) both;
+}
+
+@keyframes vault-hero-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+}
+
+.vault-screen.danger .vault-screen-hero {
+    background: radial-gradient(ellipse 70% 60% at 50% 48%, rgba(226, 80, 74, 0.2), transparent 72%);
+}
+
+/* заметка: карточка со стопкой за ней */
+
+.vault-note-stack {
+    position: relative;
+    width: min(268px, 76%);
+    margin-top: 14px;
+}
+
+.vault-note-ghost {
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--panel);
+    opacity: 0;
+    transition: transform 0.55s var(--ease-out), opacity 0.45s var(--ease);
+}
+
+.vault-note-ghost:nth-child(1) {
+    inset: 0 28px;
+}
+
+.vault-note-ghost:nth-child(2) {
+    inset: 0 14px;
+}
+
+.vault-screen.visible .vault-note-ghost:nth-child(1) {
+    transform: translateY(-16px);
+    opacity: 0.5;
+    transition-delay: 0.22s;
+}
+
+.vault-screen.visible .vault-note-ghost:nth-child(2) {
+    transform: translateY(-8px);
+    opacity: 0.8;
+    transition-delay: 0.15s;
 }
 
 .vault-note {
     position: relative;
-    width: min(240px, 72%);
-    padding: 16px 16px 18px;
+    padding: 16px 18px 18px;
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
     background: var(--panel);
     box-shadow: var(--shadow-md);
-    transform: rotate(-3deg) translateY(10px);
+    transform: translateY(12px);
     opacity: 0;
     transition: transform 0.5s var(--ease-out), opacity 0.4s var(--ease);
 }
 
 .vault-screen.visible .vault-note {
-    transform: rotate(-3deg);
+    transform: none;
     opacity: 1;
     transition-delay: 0.08s;
 }
 
 .vault-note-title {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    padding-right: 22px;
     overflow: hidden;
     font-size: 15px;
     font-weight: 700;
+    letter-spacing: -0.01em;
     color: var(--text);
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -3200,10 +3285,10 @@ body.google-sans .note-title {
 
 .vault-note-text {
     display: -webkit-box;
-    min-height: 3.2em;
+    min-height: 3.6em;
     overflow: hidden;
     font-family: 'Manrope', system-ui, sans-serif;
-    font-size: 12px;
+    font-size: 12.5px;
     line-height: 1.6;
     color: var(--desc);
     -webkit-line-clamp: 3;
@@ -3211,13 +3296,30 @@ body.google-sans .note-title {
     transition: filter 0.4s var(--ease), opacity 0.4s var(--ease);
 }
 
+.vault-note-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 3px 0;
+    transition: filter 0.4s var(--ease), opacity 0.4s var(--ease);
+}
+
+.vault-note-lines span {
+    height: 7px;
+    border-radius: 4px;
+    background: var(--border);
+}
+
+.vault-note-lines span:nth-child(2) { width: 86%; }
+.vault-note-lines span:nth-child(3) { width: 58%; }
+
 .vault-note-lock {
     position: absolute;
-    right: -12px;
-    bottom: -12px;
-    width: 40px;
-    height: 40px;
-    border: 3px solid var(--panel);
+    right: -10px;
+    bottom: -14px;
+    width: 44px;
+    height: 44px;
+    border: 3px solid var(--background);
     border-radius: 50%;
     background: var(--accent);
     box-shadow: var(--shadow-sm);
@@ -3226,13 +3328,14 @@ body.google-sans .note-title {
 .vault-note-lock::after {
     content: '';
     position: absolute;
-    inset: 9px;
+    inset: 10px;
     background-color: var(--accent-text);
     -webkit-mask: url('lock.svg') center / contain no-repeat;
     mask: url('lock.svg') center / contain no-repeat;
 }
 
-.vault-screen.sealed .vault-note-text {
+.vault-screen.sealed .vault-note-text,
+.vault-screen.sealed .vault-note-lines {
     filter: blur(5px);
     opacity: 0.6;
 }
@@ -3247,98 +3350,12 @@ body.google-sans .note-title {
     100% { transform: scale(1); }
 }
 
-.vault-screen .secret-inline-panel {
-    flex: none;
-    width: 100%;
-    margin: 0;
-    animation: none;
-}
-
-.vault-screen .secret-inline-card {
-    padding: 0 4px;
-    overflow: visible;
-    background: none;
-    border: none;
-    border-radius: 0;
-}
-
-.vault-screen .secret-inline-card::before,
-.vault-screen .secret-inline-card::after {
-    display: none;
-}
-
-.vault-screen .secret-inline-title {
-    margin-bottom: 6px;
-    font-size: 22px;
-}
-
-.vault-screen .secret-inline-text {
-    margin-bottom: 18px;
-    font-size: 13.5px;
-}
-
-.vault-screen .secret-inline-title + .secret-inline-form,
-.vault-screen .secret-inline-title + .secret-passkey-btn {
-    margin-top: 18px;
-}
-
-.vault-screen .secret-passkey-btn {
-    height: 48px;
-    margin-bottom: 12px;
-    font-size: 14px;
-}
-
-.vault-screen .secret-inline-field {
-    height: 48px;
-    padding-left: 14px;
-    font-size: 16px;
-}
-
-.vault-screen .secret-link-btn {
-    font-size: 12.5px;
-}
-
-.vault-screen .secret-inline-actions {
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: 8px;
-    margin-top: 18px;
-}
-
-.vault-screen .secret-inline-actions button {
-    width: 100%;
-    min-height: 48px;
-    font-size: 14px;
-}
-
-.vault-screen .secret-inline-actions .notification-cancel {
-    background: var(--background);
-    color: var(--text);
-}
-
-.vault-screen-hero {
-    transition: background-color 0.3s var(--ease);
-}
-
-.vault-screen-hero.swap > * {
-    animation: vault-hero-in 0.4s var(--ease-out) both;
-}
-
-@keyframes vault-hero-in {
-    from { opacity: 0; transform: translateY(8px) scale(0.97); }
-    to   { opacity: 1; transform: none; }
-}
-
-.vault-screen.danger .vault-screen-hero {
-    background:
-        radial-gradient(circle at 50% 50%, rgba(226, 80, 74, 0.32), transparent 72%),
-        rgba(226, 80, 74, 0.14);
-}
+/* сброс: стопка секретных заметок */
 
 .vault-pile {
     position: relative;
-    width: 124px;
-    height: 82px;
+    width: 132px;
+    height: 88px;
 }
 
 .vault-pile-card {
@@ -3346,8 +3363,8 @@ body.google-sans .note-title {
     inset: 0;
     display: flex;
     flex-direction: column;
-    gap: 7px;
-    padding: 14px 13px;
+    gap: 8px;
+    padding: 15px 14px;
     border: 1px solid var(--border);
     border-radius: 12px;
     background: var(--panel);
@@ -3379,26 +3396,226 @@ body.google-sans .note-title {
 .vault-pile-card span:nth-child(2) { width: 90%; }
 .vault-pile-card span:nth-child(3) { width: 70%; }
 
+.vault-pile-badge {
+    position: absolute;
+    right: -14px;
+    bottom: -14px;
+    z-index: 1;
+    width: 44px;
+    height: 44px;
+    border: 3px solid var(--background);
+    border-radius: 50%;
+    background: #e2504a;
+    box-shadow: var(--shadow-sm);
+    animation: vault-badge-in 0.4s var(--ease-out) 0.3s both;
+    transition: opacity 0.3s var(--ease);
+}
+
+.vault-pile-badge::after {
+    content: '';
+    position: absolute;
+    inset: 11px;
+    background-color: #fff;
+    -webkit-mask: url('trash-bin.svg') center / contain no-repeat;
+    mask: url('trash-bin.svg') center / contain no-repeat;
+}
+
+@keyframes vault-badge-in {
+    from { opacity: 0; transform: scale(0.6); }
+    to   { opacity: 1; transform: none; }
+}
+
+.vault-pile-count {
+    margin-top: 14px;
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--desc);
+    transition: opacity 0.3s var(--ease);
+}
+
 .vault-screen.wiping .vault-pile-card {
     animation: none;
     transform: translate(var(--x), 220px) rotate(calc(var(--r) * 2.5));
     opacity: 0;
 }
 
+.vault-screen.wiping .vault-pile-badge,
+.vault-screen.wiping .vault-pile-count {
+    opacity: 0;
+}
+
+/* ---------- низ: форма на карточке ---------- */
+
+.vault-screen .secret-inline-panel {
+    flex: none;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 22px 18px 18px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    animation: none;
+    transform: translateY(16px);
+    opacity: 0;
+    transition: transform 0.5s var(--ease-out) 0.12s, opacity 0.35s var(--ease) 0.12s;
+}
+
+.vault-screen.visible .secret-inline-panel {
+    transform: none;
+    opacity: 1;
+}
+
+.vault-screen .secret-inline-card {
+    padding: 0;
+    overflow: visible;
+    background: none;
+    border: none;
+    border-radius: 0;
+}
+
+.vault-screen .secret-inline-card::before,
+.vault-screen .secret-inline-card::after {
+    display: none;
+}
+
+.vault-screen .secret-inline-step {
+    margin-bottom: 8px;
+    font-size: 12px;
+}
+
+.vault-screen .secret-inline-title {
+    margin-bottom: 6px;
+    font-size: 22px;
+}
+
+.vault-screen .secret-inline-text {
+    margin-bottom: 18px;
+    font-size: 13.5px;
+}
+
+.vault-screen .secret-inline-title + .secret-inline-form,
+.vault-screen .secret-inline-title + .secret-passkey-btn {
+    margin-top: 18px;
+}
+
+.vault-screen .secret-passkey-btn {
+    height: 52px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+}
+
+.vault-screen .secret-inline-input {
+    margin-bottom: 12px;
+}
+
+.vault-screen .secret-inline-field {
+    height: 52px;
+    padding-left: 15px;
+    border-radius: 12px;
+    font-size: 16px;
+}
+
+.vault-screen .secret-eye-btn {
+    width: 36px;
+    height: 36px;
+    right: 8px;
+}
+
+.vault-screen .secret-link-btn {
+    font-size: 12.5px;
+}
+
+.vault-screen .secret-link-btn.secret-forgot-btn {
+    position: relative;
+    margin: -2px 2px 14px 0;
+}
+
+.vault-screen .secret-link-btn.secret-forgot-btn::after {
+    content: '';
+    position: absolute;
+    inset: -12px -10px;
+}
+
+.vault-screen .secret-inline-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 6px;
+    margin-top: 18px;
+}
+
+.vault-screen .secret-inline-actions button {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 12px;
+    font-size: 15px;
+}
+
+.vault-screen .secret-inline-actions .notification-confirm {
+    font-weight: 700;
+}
+
+.vault-screen .secret-inline-actions .notification-cancel {
+    min-height: 46px;
+    font-size: 14px;
+    background: none;
+    color: var(--desc);
+}
+
+.vault-screen .secret-inline-actions .notification-cancel:active {
+    background: var(--background);
+    color: var(--text);
+}
+
+/* когда экран тесный (клавиатура, альбомная ориентация) */
+
+@media (max-height: 640px) {
+    .vault-screen-hero {
+        min-height: 0;
+        gap: 14px;
+        padding: 14px 0 22px;
+    }
+
+    .vault-note-stack {
+        width: min(220px, 70%);
+    }
+
+    .vault-note-ghost {
+        display: none;
+    }
+
+    .vault-note-text {
+        min-height: 0;
+        -webkit-line-clamp: 2;
+    }
+
+    .vault-pile {
+        transform: scale(0.8);
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .vault-screen,
     .vault-note,
+    .vault-note-ghost,
     .vault-note-text,
-    .vault-pile-card {
+    .vault-note-lines,
+    .vault-pile-card,
+    .vault-pile-badge,
+    .vault-pile-count,
+    .vault-screen .secret-inline-panel {
         transition: none;
     }
 
     .vault-pile-card,
+    .vault-pile-badge,
     .vault-screen-hero.swap > * {
         animation: none;
     }
 }
-
 
 body .welcome-providers,
 body .account-panel-providers {

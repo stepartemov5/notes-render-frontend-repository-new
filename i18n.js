@@ -183,6 +183,7 @@ const EN = {
     "Все секретные заметки, включая корзину, будут удалены навсегда, а пароль сброшен. Восстановить их невозможно.": "All secret notes, including the trash, will be deleted forever and the password reset. They can't be recovered.",
     "Удалить всё": "Delete everything",
     "Без названия": "Untitled",
+    "Секретных заметок: {count}": "Secret notes: {count}",
     "Заметка повреждена или зашифрована другим паролем.": "The note is corrupted or encrypted with a different password.",
     "Секретная заметка": "Secret note",
     "в названиях": " in titles",

@@ -58,11 +58,13 @@
             --accent-text: #1d2024;
             --accent-subtle: rgba(251, 212, 56, 0.16);
             --danger: #e2504a;
+            --icon-filter: none;
+            --shadow-md: 0 1px 2px rgba(29, 32, 36, 0.04), 0 10px 24px rgba(29, 32, 36, 0.08);
             --radius-sm: 10px;
+            --radius-lg: 22px;
             --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
             --ease: cubic-bezier(0.4, 0, 0.2, 1);
             --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-            --card-shadow: 0 40px 70px -50px rgba(20, 24, 32, 0.35);
         }
 
         :root[data-theme="dark"] {
@@ -76,7 +78,7 @@
             --accent-text: #ffffff;
             --accent-subtle: rgba(107, 141, 255, 0.14);
             --icon-filter: brightness(0) invert(1);
-            --card-shadow: 0 40px 70px -40px rgba(0, 0, 0, 0.6);
+            --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.2), 0 10px 24px rgba(0, 0, 0, 0.3);
         }
 
         * {
@@ -92,28 +94,56 @@
             justify-content: center;
             min-height: 100vh;
             min-height: 100dvh;
-            padding: 96px 28px 48px;
+            padding: 40px 20px;
+            overflow-x: hidden;
             background: var(--background);
             color: var(--text);
             font-family: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Open Sans', sans-serif;
             -webkit-font-smoothing: antialiased;
+            user-select: none;
         }
 
-        ::selection {
-            background: var(--accent-subtle);
-            color: var(--text);
+        .watermark {
+            position: fixed;
+            right: -9vmin;
+            bottom: -12vmin;
+            z-index: -1;
+            width: 70vmin;
+            height: 70vmin;
+            background-color: var(--accent);
+            opacity: 0.13;
+            -webkit-mask: url('/логотип заметки.svg') center / contain no-repeat;
+            mask: url('/логотип заметки.svg') center / contain no-repeat;
+            transform: rotate(-14deg);
+            pointer-events: none;
+            animation: watermark-in 1.4s var(--ease-out) backwards;
+        }
+
+        .sheet {
+            width: 100%;
+            max-width: 640px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--panel);
+            box-shadow: var(--shadow-md);
+            animation: rise 0.7s var(--ease-out) backwards;
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
         }
 
         .brand {
-            position: fixed;
-            top: 24px;
-            left: 28px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 9px;
             color: var(--text);
             font-family: 'PT Root UI', system-ui, sans-serif;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: -0.01em;
             text-decoration: none;
@@ -121,79 +151,143 @@
         }
 
         .brand img {
-            width: 28px;
-            height: 28px;
-            filter: var(--icon-filter, none);
+            width: 22px;
+            height: 22px;
+            filter: var(--icon-filter);
             pointer-events: none;
         }
 
-        .layout {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
-            align-items: center;
-            gap: 64px;
-            width: 100%;
-            max-width: 940px;
+        .body {
+            padding: 36px 36px 32px;
         }
 
-        .kicker {
-            display: block;
-            margin-bottom: 14px;
-            color: var(--desc);
-            font-size: 12px;
-            font-weight: 600;
-            user-select: none;
-        }
-
-        .code {
+        .tags {
             display: flex;
-            margin-bottom: 22px;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 18px;
+        }
+
+        .tag {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: var(--accent-subtle);
             color: var(--accent);
-            font-family: 'PT Root UI', system-ui, sans-serif;
-            font-size: clamp(96px, 14vw, 156px);
+            font-size: 11.5px;
             font-weight: 700;
-            line-height: 0.85;
-            letter-spacing: -0.04em;
-            user-select: none;
-            cursor: default;
-        }
-
-        .code span {
-            display: inline-block;
-            width: 0.6em;
-            text-align: center;
-        }
-
-        .code span.scrambling {
-            color: var(--desc);
-            opacity: 0.55;
         }
 
         .title {
-            max-width: 15em;
             margin-bottom: 14px;
             font-family: 'PT Root UI', system-ui, sans-serif;
-            font-size: clamp(24px, 3vw, 30px);
+            font-size: clamp(30px, 6vw, 44px);
             font-weight: 700;
-            line-height: 1.15;
-            letter-spacing: -0.03em;
+            line-height: 1.08;
+            letter-spacing: -0.035em;
         }
 
         .text {
-            max-width: 30em;
-            margin-bottom: 28px;
+            max-width: 32em;
+            margin-bottom: 24px;
             color: var(--desc);
-            font-size: 14px;
+            font-size: 14.5px;
             line-height: 1.7;
+        }
+
+        .todo {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 30px;
+            list-style: none;
+        }
+
+        .todo-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            min-height: 36px;
+            padding: 4px 0 4px 32px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 14.5px;
+            text-align: left;
+            text-decoration: line-through;
+            text-decoration-color: transparent;
+            text-decoration-thickness: 1px;
+            background: none;
+            border: 0;
+            cursor: pointer;
+            transition: color 0.3s var(--ease-out), text-decoration-color 0.3s var(--ease-out);
+        }
+
+        .todo-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 19px;
+            height: 19px;
+            border: 1.5px solid var(--border);
+            border-radius: 5px;
+            background: var(--panel);
+            transform: translateY(-50%);
+            transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease);
+        }
+
+        .todo-item:hover::before {
+            border-color: var(--accent);
+        }
+
+        .todo-item::after {
+            content: '';
+            position: absolute;
+            left: 9.5px;
+            top: 50%;
+            width: 5px;
+            height: 9px;
+            border: solid var(--accent-text);
+            border-width: 0 1.98px 1.98px 0;
+            transform: translate(-50%, -60%) rotate(45deg);
+            opacity: 0;
+}
+
+        .todo-item[aria-checked="true"] {
+            color: var(--desc);
+            text-decoration-color: var(--desc);
+        }
+
+        .todo-item[aria-checked="true"]::before {
+            background: var(--accent);
+            border-color: var(--accent);
+            animation: check-pop 0.3s var(--ease-out);
+        }
+
+        .todo-item[aria-checked="true"]::after {
+            opacity: 1;
+            animation: draw-check 0.35s var(--ease-out) forwards;
+        }
+
+        .todo-item:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+            border-radius: 6px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 42px;
-            padding: 0 22px;
-            border: 0;
+            height: 44px;
+            padding: 0 24px;
+            border: 1px solid var(--accent);
             border-radius: var(--radius-sm);
             background: var(--accent);
             color: var(--accent-text);
@@ -203,7 +297,7 @@
             text-decoration: none;
             user-select: none;
             cursor: pointer;
-            transition: filter 0.15s var(--ease), box-shadow 0.3s var(--ease);
+            transition: filter 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease);
         }
 
         .btn:hover {
@@ -215,166 +309,62 @@
             outline-offset: 3px;
         }
 
-        .btn.nudge {
-            box-shadow: 0 0 0 6px var(--accent-subtle);
+        .btn[hidden] {
+            display: none;
         }
 
-        .card {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            padding: 18px;
-            border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
-            border-radius: 16px;
-            background: var(--panel);
-            box-shadow: var(--card-shadow);
+        .btn.ghost {
+            border-color: var(--border);
+            background: transparent;
+            color: var(--desc);
         }
 
-        .card.shake {
-            animation: shake 0.42s var(--ease);
+        .btn.ghost:hover {
+            border-color: var(--accent);
+            color: var(--text);
+            filter: none;
         }
 
-        .card-head {
+        .foot {
             display: flex;
             align-items: center;
-            gap: 10px;
-            user-select: none;
-        }
-
-        .lock {
-            flex: 0 0 15px;
-            height: 15px;
-            background-color: var(--accent);
-            -webkit-mask: url('/lock.svg') center / contain no-repeat;
-            mask: url('/lock.svg') center / contain no-repeat;
-        }
-
-        .card-title {
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-            font-size: 14px;
-            font-weight: 700;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        .badge {
-            flex-shrink: 0;
-            padding: 2px 8px;
-            border-radius: 999px;
-            background: var(--accent-subtle);
-            color: var(--accent);
-            font-size: 10.5px;
-            font-weight: 700;
-        }
-
-        .cipher {
-            min-height: 76px;
-            max-height: 96px;
-            padding: 12px;
-            overflow: hidden;
-            border-radius: var(--radius-sm);
-            background: var(--background);
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 24px;
+            border-top: 1px solid var(--border);
             color: var(--desc);
-            font-family: var(--mono);
             font-size: 12px;
-            line-height: 1.6;
-            overflow-wrap: anywhere;
-            user-select: none;
-            transition: color 0.3s var(--ease);
         }
 
-        .cipher.tick {
-            animation: tick 0.5s var(--ease-out);
-        }
-
-        .unlock {
+        .status {
             display: flex;
-            gap: 8px;
-        }
-
-        .field {
-            flex: 1;
-            min-width: 0;
-            height: 40px;
-            padding: 0 12px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            background: var(--background);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-            -webkit-text-security: disc;
-            transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease);
-        }
-
-        .field::placeholder {
-            color: var(--desc);
-            opacity: 0.8;
-        }
-
-        .field:focus {
-            border-color: var(--accent);
-            background: var(--panel);
-        }
-
-        .open {
             flex-shrink: 0;
-            height: 40px;
-            padding: 0 16px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            background: var(--panel);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 13px;
+            align-items: center;
+            gap: 8px;
             font-weight: 600;
-            cursor: pointer;
-            transition: border-color 0.15s var(--ease);
         }
 
-        .open:hover {
-            border-color: var(--accent);
+        .status::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--danger);
         }
 
-        .reply {
-            min-height: 20px;
-            color: var(--desc);
-            font-size: 12.5px;
-            line-height: 1.55;
-        }
-
-        .reply.error {
-            color: var(--danger);
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: none; }
-            20% { transform: translateX(-7px); }
-            40% { transform: translateX(6px); }
-            60% { transform: translateX(-4px); }
-            80% { transform: translateX(2px); }
-        }
-
-        @keyframes tick {
-            from { color: var(--accent); }
-            to   { color: var(--desc); }
-        }
-
-        .layout > * {
-            animation: rise 0.7s var(--ease-out) backwards;
-        }
-
-        .layout > :nth-child(2) {
-            animation-delay: 0.15s;
+        .path {
+            min-width: 0;
+            overflow: hidden;
+            font-family: var(--mono);
+            font-size: 11.5px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         @keyframes rise {
             from {
                 opacity: 0;
-                transform: translateY(14px);
+                transform: translateY(16px);
             }
             to {
                 opacity: 1;
@@ -382,94 +372,118 @@
             }
         }
 
-        @media (max-width: 800px) {
+        @keyframes watermark-in {
+            from {
+                opacity: 0;
+                transform: rotate(-34deg) scale(0.9);
+            }
+            to {
+                opacity: 0.13;
+                transform: rotate(-14deg);
+            }
+        }
+
+        @keyframes check-pop {
+            0%   { transform: translateY(-50%) scale(1); }
+            40%  { transform: translateY(-50%) scale(0.86); }
+            100% { transform: translateY(-50%) scale(1); }
+        }
+
+        @keyframes draw-check {
+            0%   { clip-path: inset(calc(100% - 2.5px) 100% 0 0); }
+            40%  { clip-path: inset(calc(100% - 2.5px) 0 0 0); }
+            100% { clip-path: inset(0 0 0 0); }
+        }
+
+        @media (max-width: 560px) {
             body {
                 align-items: flex-start;
-                padding: 84px 18px 32px;
+                padding: 24px 14px;
             }
 
-            .brand {
-                top: 20px;
-                left: 18px;
+            .watermark {
+                right: -26vmin;
+                bottom: -18vmin;
+                width: 96vmin;
+                height: 96vmin;
             }
 
-            .layout {
-                grid-template-columns: minmax(0, 1fr);
-                gap: 32px;
+            .bar {
+                padding: 12px 18px;
             }
 
-            .field {
-                font-size: 16px;
+            .body {
+                padding: 26px 20px 24px;
+            }
+
+            .foot {
+                padding: 12px 18px;
+            }
+
+            .btn {
+                flex: 1 1 140px;
             }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .layout > *,
-            .card.shake,
-            .cipher.tick {
+            .sheet,
+            .watermark,
+            .todo-item[aria-checked="true"]::before,
+            .todo-item[aria-checked="true"]::after {
                 animation: none;
             }
         }
     </style>
 </head>
 <body>
-    <a href="/" class="brand">
-        <img src="/логотип заметки.svg">
-        <span>codeq notes</span>
-    </a>
+    <div class="watermark" aria-hidden="true"></div>
 
-    <main class="layout">
-        <section>
-            <span class="kicker" data-text="kicker">ошибка 404</span>
-            <div class="code" id="code"><span>4</span><span>0</span><span>4</span></div>
-            <h1 class="title" data-text="title">Эта страница засекречена. Настолько, что её нет.</h1>
-            <p class="text" data-text="text">Мы зашифровали её так надёжно, что сами потеряли ключ. Можно попробовать её открыть, но выход надёжнее.</p>
-            <a href="/" class="btn" id="home" data-text="home">К заметкам</a>
-        </section>
+    <main class="sheet">
+        <div class="bar">
+            <a href="/" class="brand">
+                <img src="/логотип заметки.svg" alt="">
+                <span>codeq notes</span>
+            </a>
+        </div>
 
-        <form class="card" id="card" autocomplete="off">
-            <div class="card-head">
-                <span class="lock"></span>
-                <span class="card-title" id="cardTitle"></span>
-                <span class="badge" data-text="badge">секретная</span>
+        <div class="body">
+            <div class="tags">
+                <span class="tag">#404</span>
+                <span class="tag" data-text="tag">#нет-такой-страницы</span>
             </div>
-            <div class="cipher" id="cipher"></div>
-            <div class="unlock">
-                <input class="field" id="field" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" data-placeholder="field">
-                <button class="open" type="submit" data-text="open">Открыть</button>
+            <h1 class="title" data-text="title">Страница не найдена</h1>
+            <p class="text" data-text="text">Мы искали везде, но по этому адресу ничего нет. Возможно, ссылка устарела или в адресе опечатка.</p>
+
+            <ul class="todo">
+                <li><button type="button" class="todo-item" role="checkbox" aria-checked="false" data-text="todo1">Проверить адрес на опечатки</button></li>
+                <li><button type="button" class="todo-item" role="checkbox" aria-checked="false" data-text="todo2">Не паниковать: все заметки на месте</button></li>
+                <li><button type="button" class="todo-item" role="checkbox" aria-checked="false" data-text="todo3">Вернуться к заметкам</button></li>
+            </ul>
+
+            <div class="actions">
+                <a href="/" class="btn" data-text="home">К заметкам</a>
+                <button type="button" class="btn ghost" id="back" data-text="back" hidden>Назад</button>
             </div>
-            <p class="reply" id="reply" data-text="hint">Шифр выше настоящий: AES-256 прямо в этом браузере.</p>
-        </form>
+        </div>
+
+        <div class="foot">
+            <span class="status" data-text="status">Ошибка 404</span>
+            <span class="path" id="path"></span>
+        </div>
     </main>
 
     <script>
         (() => {
-            const TEXT = {
-                ru: {
-                    field: 'Пароль от страницы',
-                    replies: [
-                        'Неверный пароль.',
-                        'Снова мимо. Попробуйте ещё — шучу, не надо.',
-                        'Даже правильный пароль не поможет: шифровать было нечего.',
-                        'Хранилище пустое. Выход — кнопка «К заметкам».'
-                    ]
-                },
-                en: {
-                    kicker: 'error 404',
-                    title: 'This page is classified. So classified it doesn’t exist.',
-                    text: 'We encrypted it so well we lost the key ourselves. You can try to unlock it, but the exit is a safer bet.',
-                    home: 'Back to notes',
-                    badge: 'secret',
-                    open: 'Unlock',
-                    hint: 'The cipher above is real: AES-256, right in this browser.',
-                    field: 'Page password',
-                    replies: [
-                        'Wrong password.',
-                        'Missed again. Try once more — kidding, please don’t.',
-                        'Even the right password won’t help: there was nothing to encrypt.',
-                        'The vault is empty. The way out is “Back to notes”.'
-                    ]
-                }
+            const EN = {
+                tag: '#no-such-page',
+                title: 'Page not found',
+                text: 'We looked everywhere, but there’s nothing at this address. The link may be outdated or the address may have a typo.',
+                todo1: 'Check the address for typos',
+                todo2: 'Don’t panic: all your notes are safe',
+                todo3: 'Go back to your notes',
+                home: 'Back to notes',
+                back: 'Go back',
+                status: 'Error 404'
             };
 
             let lang = null;
@@ -479,12 +493,11 @@
             if (lang !== 'ru' && lang !== 'en') {
                 lang = (navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en';
             }
-            const text = TEXT[lang];
             if (lang === 'en') {
                 document.documentElement.lang = 'en';
                 document.title = 'Page not found ― codeq notes';
                 document.querySelectorAll('[data-text]').forEach(node => {
-                    const value = text[node.dataset.text];
+                    const value = EN[node.dataset.text];
                     if (value)
                         node.textContent = value;
                 });
@@ -493,119 +506,25 @@
             const dark = document.documentElement.getAttribute('data-theme') === 'dark';
             document.querySelector('meta[name="theme-color"]').content = dark ? '#16181b' : '#f7f8fa';
 
-            const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-            const field = document.getElementById('field');
-            const cipher = document.getElementById('cipher');
-            const card = document.getElementById('card');
-            const reply = document.getElementById('reply');
-            const home = document.getElementById('home');
-            field.placeholder = text.field;
-
             let path = '/';
             try {
                 path = decodeURIComponent(location.pathname);
             } catch {
                 path = location.pathname;
             }
-            if (path.length > 60)
-                path = path.slice(0, 57) + '…';
-            document.getElementById('cardTitle').textContent = path;
+            document.getElementById('path').textContent = path;
 
-            const GLYPHS = '0123456789ABCDEF#%&?';
-            const digits = Array.from(document.querySelectorAll('#code span'));
-            let scrambleTimer = null;
-            function scramble() {
-                if (reduced)
-                    return;
-                clearInterval(scrambleTimer);
-                const start = performance.now();
-                scrambleTimer = setInterval(() => {
-                    const elapsed = performance.now() - start;
-                    let done = true;
-                    digits.forEach((digit, index) => {
-                        const final = '404'[index];
-                        if (elapsed > 520 + index * 220) {
-                            digit.textContent = final;
-                            digit.classList.remove('scrambling');
-                        }
-                        else {
-                            done = false;
-                            digit.textContent = GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-                            digit.classList.add('scrambling');
-                        }
-                    });
-                    if (done)
-                        clearInterval(scrambleTimer);
-                }, 55);
-            }
-            scramble();
-            document.getElementById('code').addEventListener('mouseenter', scramble);
-
-            const encoder = new TextEncoder();
-            let keyPromise = null;
-            function getKey() {
-                if (!keyPromise && window.crypto && crypto.subtle) {
-                    keyPromise = crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt']);
-                }
-                return keyPromise;
-            }
-            function toBase64(bytes) {
-                let binary = '';
-                bytes.forEach(byte => { binary += String.fromCharCode(byte); });
-                return btoa(binary);
-            }
-            function fakeCipher(length) {
-                const bytes = new Uint8Array(length);
-                crypto.getRandomValues(bytes);
-                return toBase64(bytes);
-            }
-            let encryptRun = 0;
-            async function encrypt(value) {
-                const run = ++encryptRun;
-                const source = value || path;
-                let output;
-                try {
-                    const key = await getKey();
-                    const iv = crypto.getRandomValues(new Uint8Array(12));
-                    const data = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder.encode(source)));
-                    const joined = new Uint8Array(iv.length + data.length);
-                    joined.set(iv);
-                    joined.set(data, iv.length);
-                    output = toBase64(joined);
-                }
-                catch {
-                    output = fakeCipher(28 + source.length);
-                }
-                if (run !== encryptRun)
-                    return;
-                cipher.textContent = output;
-                if (!reduced) {
-                    cipher.classList.remove('tick');
-                    void cipher.offsetWidth;
-                    cipher.classList.add('tick');
-                }
-            }
-            encrypt('');
-            field.addEventListener('input', () => encrypt(field.value));
-
-            let attempts = 0;
-            card.addEventListener('submit', event => {
-                event.preventDefault();
-                const index = Math.min(attempts, text.replies.length - 1);
-                attempts++;
-                reply.textContent = text.replies[index];
-                reply.classList.add('error');
-                field.value = '';
-                encrypt('');
-                if (!reduced) {
-                    card.classList.remove('shake');
-                    void card.offsetWidth;
-                    card.classList.add('shake');
-                }
-                if (attempts >= 3)
-                    home.classList.add('nudge');
-                field.focus({ preventScroll: true });
+            document.querySelectorAll('.todo-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    item.setAttribute('aria-checked', item.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+                });
             });
+
+            if (history.length > 1) {
+                const back = document.getElementById('back');
+                back.hidden = false;
+                back.addEventListener('click', () => history.back());
+            }
         })();
     </script>
 </body>

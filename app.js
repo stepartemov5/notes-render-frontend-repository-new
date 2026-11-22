@@ -1401,31 +1401,40 @@ import {
                 host.classList.toggle('danger', next === 'reset');
                 if (next === 'reset') {
                     const count = [...notes, ...trashedNotes, ...otherNotes, ...otherTrash].filter(n => n.secret).length;
-                    const fan = Math.min(36, (count - 1) * 9);
-                    const spread = Math.min(120, (count - 1) * 26);
-                    const step = Math.min(70, 500 / Math.max(count, 1));
+                    const shown = Math.max(1, Math.min(count, 5));
+                    const fan = Math.min(24, (shown - 1) * 7);
+                    const spread = Math.min(72, (shown - 1) * 18);
+                    const step = Math.min(70, 360 / shown);
                     hero.innerHTML = `
                         <div class="vault-pile">
-                            ${Array.from({ length: count }, (_, i) => {
-                                const t = count > 1 ? i / (count - 1) - 0.5 : 0;
+                            ${Array.from({ length: shown }, (_, i) => {
+                                const k = shown > 1 ? i / (shown - 1) - 0.5 : 0;
                                 return `
-                                    <div class="vault-pile-card" style="--x:${(t * spread).toFixed(1)}px;--y:${(Math.abs(t) * 14).toFixed(1)}px;--r:${(count > 1 ? t * fan : -3).toFixed(1)}deg;--d:${Math.round(i * step)}ms">
+                                    <div class="vault-pile-card" style="--x:${(k * spread).toFixed(1)}px;--y:${(Math.abs(k) * 10).toFixed(1)}px;--r:${(shown > 1 ? k * fan : -2).toFixed(1)}deg;--d:${Math.round(i * step)}ms">
                                         <span></span><span></span><span></span>
                                     </div>
                                 `;
                             }).join('')}
+                            <span class="vault-pile-badge"></span>
                         </div>
+                        ${count ? `<div class="vault-pile-count">${t('Секретных заметок: {count}', { count })}</div>` : ''}
                     `;
                 }
                 else {
                     const target = getNote(activeNoteId);
                     const title = target && target.title.trim() ? target.title.trim() : t('Без названия');
-                    const preview = target ? stripHtml(target.content).slice(0, 160) : '';
+                    const preview = target ? stripHtml(target.content).slice(0, 160).trim() : '';
                     hero.innerHTML = `
-                        <div class="vault-note">
-                            <div class="vault-note-title">${escapeHtml(title)}</div>
-                            <div class="vault-note-text">${escapeHtml(preview)}</div>
-                            <span class="vault-note-lock"></span>
+                        <div class="vault-note-stack">
+                            <span class="vault-note-ghost"></span>
+                            <span class="vault-note-ghost"></span>
+                            <div class="vault-note">
+                                <div class="vault-note-title">${escapeHtml(title)}</div>
+                                ${preview
+                                    ? `<div class="vault-note-text">${escapeHtml(preview)}</div>`
+                                    : '<div class="vault-note-lines"><span></span><span></span><span></span></div>'}
+                                <span class="vault-note-lock"></span>
+                            </div>
                         </div>
                     `;
                 }
@@ -2285,25 +2294,72 @@ import {
     let lastRenderedNoteId = null;
     let noteEnterTimer = null;
     let appEnterTimer = null;
-    let lastNoteSwitchAt = 0;
-    const NOTE_ENTER_COOLDOWN = 1500;
-    function animateNoteEnter() {
+    function discardNoteGhosts(ghosts) {
+        if (ghosts)
+            ghosts.forEach(g => g.remove());
+    }
+    function captureNoteGhosts() {
         const editor = document.querySelector('.editor');
         if (!editor)
-            return;
-        const now = Date.now();
-        const rapid = now - lastNoteSwitchAt < NOTE_ENTER_COOLDOWN;
-        lastNoteSwitchAt = now;
-        if (rapid && !el.body.classList.contains('app-enter')) {
-            clearTimeout(noteEnterTimer);
-            editor.classList.remove('note-enter');
+            return null;
+        editor.querySelectorAll('.note-ghost').forEach(g => g.remove());
+        if (window.innerWidth <= 760 || lastRenderedNoteId === null || activeNoteId === lastRenderedNoteId)
+            return null;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+            return null;
+        if (['app-loading', 'app-enter', 'app-reveal'].some(c => el.body.classList.contains(c)))
+            return null;
+        if (!el.noteContent.offsetParent)
+            return null;
+        const base = editor.getBoundingClientRect();
+        const sources = [el.noteTitle, el.noteContent, editor.querySelector('.tags')].filter(Boolean);
+        return sources.map(src => {
+            const rect = src.getBoundingClientRect();
+            const ghost = src.cloneNode(true);
+            ghost.removeAttribute('id');
+            ghost.removeAttribute('contenteditable');
+            ghost.removeAttribute('name');
+            ghost.setAttribute('aria-hidden', 'true');
+            ghost.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+            ghost.querySelectorAll('[contenteditable]').forEach(n => n.removeAttribute('contenteditable'));
+            ghost.querySelectorAll('button, input, a').forEach(n => { n.tabIndex = -1; });
+            ghost.tabIndex = -1;
+            if (src === el.noteTitle) {
+                ghost.value = src.value;
+                ghost.readOnly = true;
+            }
+            ghost.classList.add('note-ghost');
+            ghost.style.setProperty('--ghost-from', getComputedStyle(src).opacity);
+            ghost.style.left = `${rect.left - base.left - editor.clientLeft}px`;
+            ghost.style.top = `${rect.top - base.top - editor.clientTop}px`;
+            ghost.style.width = `${rect.width}px`;
+            ghost.style.height = `${rect.height}px`;
+            editor.appendChild(ghost);
+            ghost.scrollTop = src.scrollTop;
+            return ghost;
+        });
+    }
+    function playNoteGhosts(ghosts) {
+        ghosts.forEach(ghost => {
+            ghost.classList.add('leaving');
+            ghost.addEventListener('animationend', () => ghost.remove(), { once: true });
+        });
+        setTimeout(() => discardNoteGhosts(ghosts), 600);
+    }
+    function animateNoteEnter(ghosts) {
+        const editor = document.querySelector('.editor');
+        if (!editor) {
+            discardNoteGhosts(ghosts);
             return;
         }
-        editor.classList.remove('note-enter');
+        const intro = el.body.classList.contains('app-enter') || el.body.classList.contains('app-reveal');
+        editor.classList.remove('note-enter', 'note-switch');
         void editor.offsetWidth;
-        editor.classList.add('note-enter');
+        editor.classList.add(intro ? 'note-enter' : 'note-switch');
+        if (ghosts)
+            playNoteGhosts(ghosts);
         clearTimeout(noteEnterTimer);
-        noteEnterTimer = setTimeout(() => editor.classList.remove('note-enter'), 1000);
+        noteEnterTimer = setTimeout(() => editor.classList.remove('note-enter', 'note-switch'), intro ? 1000 : 500);
     }
     let appRevealTimer = null;
     function revealApp() {
@@ -2322,6 +2378,7 @@ import {
         appEnterTimer = setTimeout(() => el.body.classList.remove('app-enter'), 1400);
     }
     function renderEditor() {
+        const ghosts = captureNoteGhosts();
         removeTrashBanner();
         let note = getNote(activeNoteId);
         if (note && note.secret && (note.locked || !vaultKey)) {
@@ -2340,6 +2397,7 @@ import {
             applyGoogleSans();
             hideCodeCopy();
             updateNoteStats();
+            discardNoteGhosts(ghosts);
             lastRenderedNoteId = null;
             return;
         }
@@ -2356,7 +2414,9 @@ import {
         hideCodeCopy();
         updateNoteStats();
         if (note.id !== lastRenderedNoteId)
-            animateNoteEnter();
+            animateNoteEnter(ghosts);
+        else
+            discardNoteGhosts(ghosts);
         lastRenderedNoteId = note.id;
     }
     function showMakeSecretConfirmNotification() {
@@ -2780,6 +2840,7 @@ import {
         }
         await persistActiveNote();
         activeNoteId = id;
+        const ghosts = captureNoteGhosts();
         if (window.innerWidth <= 760) {
             el.body.classList.add('editor-fullscreen');
         }
@@ -2800,7 +2861,9 @@ import {
         updateNoteStats();
         refreshFind(true);
         if (note.id !== lastRenderedNoteId)
-            animateNoteEnter();
+            animateNoteEnter(ghosts);
+        else
+            discardNoteGhosts(ghosts);
         lastRenderedNoteId = note.id;
         renderNotesList();
         renderTrash();
@@ -7297,4 +7360,9 @@ import {
     }
     updateFullscreenIcon();
     window.addEventListener('resize', updateFullscreenIcon);
+    const mobileLayout = window.matchMedia('(max-width: 760px)');
+    mobileLayout.addEventListener('change', event => {
+        if (!event.matches && activeVaultModal && activeVaultModal.screen)
+            activeVaultModal.close(false);
+    });
 })();
